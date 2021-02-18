@@ -79,4 +79,23 @@ public class MypageViewHandler {
             e.printStackTrace();
         }
     }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenSent_then_UPDATE_1(@Payload Sent sent) {
+        try {
+            if (sent.isMe()) {
+                // view 객체 조회
+                List<Mypage> mypageList = mypageRepository.findByBookingId(sent.getBookingId());
+                for(Mypage mypage : mypageList) {
+                    mypage.setStatus(sent.getStatus());
+                    mypage.setDonationValue(sent.getValue());
+                    mypage.setDonationOrg(sent.getOrganization());
+                    // view 레파지 토리에 save
+                    mypageRepository.save(mypage);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 }
