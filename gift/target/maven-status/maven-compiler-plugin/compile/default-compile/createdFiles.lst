@@ -1,0 +1,11 @@
+movie/Gift.class
+movie/Applied.class
+movie/AbstractEvent$1.class
+movie/AbstractEvent.class
+movie/GiftRepository.class
+movie/Printed.class
+movie/GiftApplication.class
+movie/config/kafka/KafkaProcessor.class
+movie/GiftController.class
+movie/PolicyHandler.class
+movie/Taken.class

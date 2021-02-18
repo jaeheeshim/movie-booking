@@ -79,4 +79,41 @@ public class MypageViewHandler {
             e.printStackTrace();
         }
     }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenTaken_then_UPDATE_3(@Payload Taken taken) {
+        try {
+            if (taken.isMe()) {
+                // view 객체 조회
+                List<Mypage> mypageList = mypageRepository.findByBookingId(taken.getId());
+                for(Mypage mypage  : mypageList){
+                    // view 객체에 이벤트의 eventDirectValue 를 set 함
+                    mypage.setStatus(taken.getStatus());
+                    // view 레파지 토리에 save
+                    mypageRepository.save(mypage);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenApplied_then_UPDATE_4(@Payload Applied applied) {
+        try {
+            if (applied.isMe()) {
+                // view 객체 조회
+                List<Mypage> mypageList = mypageRepository.findByBookingId(applied.getId());
+                for(Mypage mypage  : mypageList){
+                    // view 객체에 이벤트의 eventDirectValue 를 set 함
+                    mypage.setGiftName(applied.getName());
+                    mypage.setGiftBarcode(applied.getBarcode());
+                    mypage.setStatus(applied.getStatus());
+                    // view 레파지 토리에 save
+                    mypageRepository.save(mypage);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 }
