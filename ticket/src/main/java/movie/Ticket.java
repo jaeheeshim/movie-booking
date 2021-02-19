@@ -17,14 +17,12 @@ public class Ticket {
     private Integer qty;
     private String status;
 
-    @PostPersist
-    public void onPostPersist(){
-        Created created = new Created();
-        BeanUtils.copyProperties(this, created);
-        created.publishAfterCommit();
-
-
-    }
+    // @PostPersist
+    // public void onPostPersist(){
+    //     Created created = new Created();
+    //     BeanUtils.copyProperties(this, created);
+    //     created.publishAfterCommit();
+    // }
 
     @PostUpdate
     public void onPostUpdate(){

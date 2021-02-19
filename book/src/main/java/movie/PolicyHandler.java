@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
+import java.util.Optional;
 
 @Service
 public class PolicyHandler{
@@ -15,11 +16,20 @@ public class PolicyHandler{
 
     }
 
+    @Autowired
+    BookRepository bookRepository;
+
     @StreamListener(KafkaProcessor.INPUT)
     public void wheneverPrinted_(@Payload Printed printed){
 
         if(printed.isMe()){
-            System.out.println("##### listener  : " + printed.toJson());
+            Optional<Book> bookOptional = bookRepository.findById(printed.getBookingId());
+            if(bookOptional.isPresent()){
+                Book book = bookOptional.get();
+                book.setStatus("Ticket Printed");
+                System.out.println("##### listener  : " + printed.toJson());
+            }
+            
         }
     }
 

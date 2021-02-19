@@ -14,11 +14,22 @@ public class PolicyHandler{
     public void onStringEventListener(@Payload String eventString){
 
     }
+    
+    @Autowired
+    TicketRepository ticketRepository;
+
 
     @StreamListener(KafkaProcessor.INPUT)
     public void wheneverBooked_(@Payload Booked booked){
 
         if(booked.isMe()){
+            Ticket ticket = new Ticket();
+            ticket.setBookingId(booked.getId());
+            ticket.setMovieName(booked.getMovieName());
+            ticket.setQty(booked.getQty());
+            ticket.setSeat(booked.getSeat());
+            ticket.setStatus("Ticket Created");
+            ticketRepository.save(ticket);
             System.out.println("##### listener  : " + booked.toJson());
         }
     }

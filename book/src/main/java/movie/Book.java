@@ -28,6 +28,9 @@ public class Book {
 
         movie.external.Payment payment = new movie.external.Payment();
         // mappings goes here
+        payment.setBookingId(this.getId());
+        payment.setStatus("Paid");
+        payment.setTotalPrice(totalPrice);
         BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
             .pay(payment);
 
@@ -40,13 +43,17 @@ public class Book {
         BeanUtils.copyProperties(this, canceled);
         canceled.publishAfterCommit();
 
+
+
         //Following code causes dependency to external APIs
         // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
 
         movie.external.Payment payment = new movie.external.Payment();
         // mappings goes here
-        BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
-            .cancel(payment);
+        payment.setBookingId(this.getId());
+        payment.setStatus("Cancel");
+        // BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
+        //     .cancel(payment);
 
 
     }

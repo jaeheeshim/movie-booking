@@ -29,8 +29,8 @@ public class Payment {
         PaymentCanceled paymentCanceled = new PaymentCanceled();
         BeanUtils.copyProperties(this, paymentCanceled);
         paymentCanceled.publishAfterCommit();
-
-
+        
+        
     }
 
 
