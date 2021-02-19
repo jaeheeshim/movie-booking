@@ -31,9 +31,7 @@ public class Book {
         movie.external.Payment payment = new movie.external.Payment();
         
         System.out.println("*********************");
-        System.out.println("*********************");
         System.out.println("결제 이벤트 발생");
-        System.out.println("*********************");
         System.out.println("*********************");
 
         // mappings goes here
@@ -45,25 +43,29 @@ public class Book {
 
     }
 
-    @PostRemove
+    @PreRemove
     public void onPreRemove(){
-        Canceled canceled = new Canceled();
-        BeanUtils.copyProperties(this, canceled);
-        canceled.publishAfterCommit();
-        System.out.println("*********************");
-        System.out.println("*********************");
-        System.out.println("취소 이벤트 발생");
-        System.out.println(status);
-        System.out.println("*********************");
-        //Following code causes dependency to external APIs
-        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
 
-        movie.external.Payment payment = new movie.external.Payment();
-        payment.setBookingId(canceled.getId());
-        payment.setStatus("Canceled");
-        BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
-            .pay(payment);
+        if("PaidComplete".equals(status)){
+            
+            Canceled canceled = new Canceled();
+            BeanUtils.copyProperties(this, canceled);
+            canceled.publishAfterCommit();
+            System.out.println("*********************");
+            System.out.println("취소 이벤트 발생");
+            System.out.println("*********************");
+            //Following code causes dependency to external APIs
+            // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
 
+            movie.external.Payment payment = new movie.external.Payment();
+            payment.setBookingId(canceled.getId());
+            payment.setStatus("Canceled");
+            BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
+                .pay(payment);
+
+
+        }
+        
 
     }
 
