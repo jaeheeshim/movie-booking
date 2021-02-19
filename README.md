@@ -48,7 +48,7 @@ MSA/DDD/Event Storming/EDA 를 포괄하는 분석/설계/구현/운영 전단�
 
 ## Event Storming 결과
 * MSAEz 로 모델링한 이벤트스토밍 결과: http://www.msaez.io/#/storming/m7AgBPcF85P7iX97YA3RWrS5Bau1/mine/c2ae8b6394e5997e32fca108f4d7a65f
-![image](https://user-images.githubusercontent.com/74696451/108295689-7636a000-71db-11eb-97bb-e9b2980c94c6.png)
+<img width="733" alt="스크린샷 2021-02-19 오후 4 18 04" src="https://user-images.githubusercontent.com/28583602/108471436-be82ba80-72ce-11eb-9615-f5b48346e771.png">
 
 ## 헥사고날 아키텍처 다이어그램 도출
 
