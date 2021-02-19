@@ -24,6 +24,7 @@ spring:
           uri: http://localhost:8084
           predicates:
             - Path=/tickets/** 
+          
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -58,7 +59,7 @@ spring:
         - id: ticket
           uri: http://ticket:8080
           predicates:
-            - Path=/tickets/** 
+            - Path=/tickets/**            
       globalcors:
         corsConfigurations:
           '[/**]':

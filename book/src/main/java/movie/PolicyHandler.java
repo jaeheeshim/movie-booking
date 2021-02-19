@@ -10,9 +10,29 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PolicyHandler{
+
+    @Autowired
+    BookRepository bookRepository;
+
     @StreamListener(KafkaProcessor.INPUT)
     public void onStringEventListener(@Payload String eventString){
 
+    }
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverPaid_(@Payload Paid paid){
+
+        if(paid.isMe()){
+
+            System.out.println("======================================");
+            System.out.println("**** listener  : " + paid.toJson());
+            System.out.println("======================================");
+            bookRepository.findById(paid.getBookingId()).ifPresent((book)->{
+                book.setStatus("PaidComplete");
+                bookRepository.save(book);
+            });
+
+        }
     }
 
     @StreamListener(KafkaProcessor.INPUT)
@@ -21,6 +41,17 @@ public class PolicyHandler{
         if(printed.isMe()){
             System.out.println("##### listener  : " + printed.toJson());
         }
-    }
+        if(printed.isMe()){
+
+            System.out.println("======================================");
+            System.out.println("**** listener  : " + printed.toJson());
+            System.out.println("======================================");
+            bookRepository.findById(printed.getBookingId()).ifPresent((book)->{
+                book.setStatus("PrintComplete");
+                bookRepository.save(book);
+            });
+
+        }
+    };
 
 }

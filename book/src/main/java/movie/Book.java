@@ -1,6 +1,8 @@
 package movie;
 
 import javax.persistence.*;
+
+import org.hibernate.annotations.SourceType;
 import org.springframework.beans.BeanUtils;
 import java.util.List;
 
@@ -14,7 +16,7 @@ public class Book {
     private Integer qty;
     private String seat;
     private String movieName;
-    private String status;
+    private String status="Registered";
     private Integer totalPrice;
 
     @PostPersist
@@ -27,27 +29,43 @@ public class Book {
         // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
 
         movie.external.Payment payment = new movie.external.Payment();
+        
+        System.out.println("*********************");
+        System.out.println("결제 이벤트 발생");
+        System.out.println("*********************");
+
         // mappings goes here
+        payment.setBookingId(booked.getId());
+        payment.setStatus("Paid");
+        payment.setTotalPrice(booked.getTotalPrice());
         BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
             .pay(payment);
 
-
     }
 
-    @PostUpdate
-    public void onPostUpdate(){
-        Canceled canceled = new Canceled();
-        BeanUtils.copyProperties(this, canceled);
-        canceled.publishAfterCommit();
+    @PreRemove
+    public void onPreRemove(){
 
-        //Following code causes dependency to external APIs
-        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
+        if("PaidComplete".equals(status)){
+            
+            Canceled canceled = new Canceled();
+            BeanUtils.copyProperties(this, canceled);
+            canceled.publishAfterCommit();
+            System.out.println("*********************");
+            System.out.println("취소 이벤트 발생");
+            System.out.println("*********************");
+            //Following code causes dependency to external APIs
+            // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
 
-        movie.external.Payment payment = new movie.external.Payment();
-        // mappings goes here
-        BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
-            .cancel(payment);
+            movie.external.Payment payment = new movie.external.Payment();
+            payment.setBookingId(canceled.getId());
+            payment.setStatus("Canceled");
+            BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
+                .pay(payment);
 
+
+        }
+        
 
     }
 

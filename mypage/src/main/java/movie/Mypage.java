@@ -18,6 +18,7 @@ public class Mypage {
         private Integer price;
 
 
+
         public Long getId() {
             return id;
         }
@@ -25,6 +26,13 @@ public class Mypage {
         public void setId(Long id) {
             this.id = id;
         }
+        public Long getBookingId() {
+            return bookingId;
+        }
+
+        public void setBookingId(Long bookingId) {
+            this.bookingId = bookingId;
+        }        
         public Integer getQty() {
             return qty;
         }
