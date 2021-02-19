@@ -16,8 +16,7 @@ public class Mypage {
         private String seat;
         private String status;
         private Integer price;
-        private Integer score;
-        private String contents;
+
 
 
         public Long getId() {
@@ -68,20 +67,6 @@ public class Mypage {
 
         public void setPrice(Integer price) {
             this.price = price;
-        }
-        public Integer getScore() {
-            return score;
-        }
-
-        public void setScore(Integer score) {
-            this.score = score;
-        }
-        public String getContents() {
-            return contents;
-        }
-
-        public void setContents(String contents) {
-            this.contents = contents;
         }
 
 }

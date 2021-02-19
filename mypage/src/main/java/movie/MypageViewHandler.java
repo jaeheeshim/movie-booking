@@ -76,26 +76,4 @@ public class MypageViewHandler {
             e.printStackTrace();
         }
     }
-
-    @StreamListener(KafkaProcessor.INPUT)
-    public void whenWrittenReviw (@Payload WrittenReview writtenReview) {
-        try {
-            if (writtenReview.isMe()) {
-                // view 객체 생성
-                List<Mypage> mypageList = mypageRepository.findByBookingId(writtenReview.getBookingId());
-                // view 객체에 이벤트의 Value 를 set 함
-                for(Mypage mypage : mypageList) {
-                    mypage.setScore(writtenReview.getScore());
-                    mypage.setContents(writtenReview.getContents());
-                    mypage.setStatus(writtenReview.getStatus());
-
-                    // view 레파지 토리에 save
-                    mypageRepository.save(mypage);
-                }
-                
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-    }    
 }
