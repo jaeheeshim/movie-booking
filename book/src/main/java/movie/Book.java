@@ -53,7 +53,7 @@ public class Book {
         System.out.println("*********************");
         System.out.println("*********************");
         System.out.println("취소 이벤트 발생");
-        System.out.println("*********************");
+        System.out.println(status);
         System.out.println("*********************");
         //Following code causes dependency to external APIs
         // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
