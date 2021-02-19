@@ -36,3 +36,5 @@ mypage/.settings/*
 payment/.settings/*
 ticket/.settings/*
 review/.settings/*
+
+aws/*
