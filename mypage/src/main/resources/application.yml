@@ -13,7 +13,7 @@ spring:
     stream:
       kafka:
         binder:
-          brokers: localhost:9092
+          brokers: 127.0.0.1:9092
         streams:
           binder:
             configuration:

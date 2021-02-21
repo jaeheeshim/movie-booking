@@ -22,21 +22,18 @@ public class MypageViewHandler {
         try {
             if (booked.isMe()) {
                 // view 객체 생성
-                List<Mypage> mypageList = mypageRepository.findByBookingId(booked.getId());
+                    Mypage mypage = new Mypage();
                 // view 객체에 이벤트의 Value 를 set 함
-                for(Mypage mypage : mypageList) {
-                    mypage.setId(booked.getId());
+                    mypage.setBookingId(booked.getId());
                     mypage.setQty(booked.getQty());
                     mypage.setMovieName(booked.getMovieName());
                     mypage.setSeat(booked.getSeat());
                     mypage.setPrice(booked.getTotalPrice());
-                    mypage.setStatus(booked.getStatus());
+                    mypage.setStatus("Booked");
 
                     // view 레파지 토리에 save
                     mypageRepository.save(mypage);
                 }
-                
-            }
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -50,7 +47,7 @@ public class MypageViewHandler {
                 // view 객체 조회
                 List<Mypage> mypageList = mypageRepository.findByBookingId(canceled.getId());
                 for(Mypage mypage : mypageList) {
-                    mypage.setStatus(canceled.getStatus());
+                    mypage.setStatus("Canceled");
 
                     // view 레파지 토리에 save
                     mypageRepository.save(mypage);
@@ -79,23 +76,26 @@ public class MypageViewHandler {
             e.printStackTrace();
         }
     }
-
     @StreamListener(KafkaProcessor.INPUT)
-    public void whenSent_then_UPDATE_1(@Payload Sent sent) {
+    public void whenSent_then_UPDATE_3 (@Payload Sent sent) {
         try {
             if (sent.isMe()) {
-                // view 객체 조회
+                // view 객체 생성
                 List<Mypage> mypageList = mypageRepository.findByBookingId(sent.getBookingId());
+                // view 객체에 이벤트의 Value 를 set 함
                 for(Mypage mypage : mypageList) {
-                    mypage.setStatus(sent.getStatus());
                     mypage.setDonationValue(sent.getValue());
-                    mypage.setDonationOrg(sent.getOrganization());
+                    mypage.setDonationOrganization(sent.getOrganization());
+                    mypage.setStatus(sent.getStatus());
+
                     // view 레파지 토리에 save
                     mypageRepository.save(mypage);
                 }
+                
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-    }
+    }    
+    
 }

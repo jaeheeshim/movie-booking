@@ -17,7 +17,7 @@ public class Mypage {
         private String status;
         private Integer price;
         private Integer donationValue;
-        private String donationOrg;
+        private String donationOrganization;
 
 
         public Long getId() {
@@ -27,6 +27,13 @@ public class Mypage {
         public void setId(Long id) {
             this.id = id;
         }
+        public Long getBookingId() {
+            return bookingId;
+        }
+
+        public void setBookingId(Long bookingId) {
+            this.bookingId = bookingId;
+        }        
         public Integer getQty() {
             return qty;
         }
@@ -62,21 +69,18 @@ public class Mypage {
         public void setPrice(Integer price) {
             this.price = price;
         }
-
-        public Integer getDonationValue(){
+        public Integer getDonationValue() {
             return donationValue;
         }
-
-        public void setDonationValue(Integer donationValue){
+    
+        public void setDonationValue(Integer donationValue) {
             this.donationValue = donationValue;
         }
-
-        public String getDonationOrg(){
-            return donationOrg;
+        public String getDonationOrganization() {
+            return donationOrganization;
         }
-
-        public void setDonationOrg(String donationOrg){
-            this.donationOrg = donationOrg;
+    
+        public void setDonationOrganization(String donationOrganization) {
+            this.donationOrganization = donationOrganization;
         }
-
 }

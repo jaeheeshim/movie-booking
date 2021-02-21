@@ -5,6 +5,9 @@ public class Created extends AbstractEvent {
     private Long id;
     private Long bookingId;
     private String status;
+    private String movieName;
+    private Integer qty;
+    private String seat;
 
     public Created(){
         super();
@@ -30,5 +33,26 @@ public class Created extends AbstractEvent {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+    public String getSeat() {
+        return seat;
+    }
+
+    public void setSeat(String seat) {
+        this.seat = seat;
+    }
+    public String getMovieName() {
+        return movieName;
+    }
+
+    public void setMovieName(String movieName) {
+        this.movieName = movieName;
+    }
+    public Integer getQty() {
+        return qty;
+    }
+
+    public void setQty(Integer qty) {
+        this.qty = qty;
     }
 }

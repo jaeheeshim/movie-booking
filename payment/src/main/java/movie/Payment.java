@@ -17,22 +17,20 @@ public class Payment {
 
     @PostPersist
     public void onPostPersist(){
-        Paid paid = new Paid();
-        BeanUtils.copyProperties(this, paid);
-        paid.publishAfterCommit();
 
+        if("Paid".equals(status)){
+            Paid paid = new Paid();
+            BeanUtils.copyProperties(this, paid);
+            paid.publishAfterCommit();
+
+        }else{
+            PaymentCanceled paymentCanceled = new PaymentCanceled();
+            BeanUtils.copyProperties(this, paymentCanceled);
+            paymentCanceled.publishAfterCommit();
+
+        }
 
     }
-
-    @PostUpdate
-    public void onPostUpdate(){
-        PaymentCanceled paymentCanceled = new PaymentCanceled();
-        BeanUtils.copyProperties(this, paymentCanceled);
-        paymentCanceled.publishAfterCommit();
-
-
-    }
-
 
     public Long getId() {
         return id;
