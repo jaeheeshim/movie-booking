@@ -17,7 +17,7 @@ public class Mypage {
         private String status;
         private Integer price;
         private String giftName;
-        private String giftBarcode;
+        private String giftCode;
 
 
         public Long getId() {
@@ -73,19 +73,13 @@ public class Mypage {
         public void setGiftName(String giftName) {
             this.giftName = giftName;
         }
-        public String getGiftBarcode() {
-            return giftBarcode;
+        public String getGiftCode() {
+            return giftCode;
         }
 
-        public void setGiftBarcode(String giftBarcode) {
-            this.giftBarcode = giftBarcode;
+        public void setGiftCode(String giftCode) {
+            this.giftCode = giftCode;
         }
-        public Long getBookingId() {
-            return bookingId;
-        }
-
-        public void setBookingId(Long bookingId) {
-            this.bookingId = bookingId;
-        }
+        
 
 }

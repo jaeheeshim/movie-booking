@@ -13,7 +13,7 @@ public class Gift {
     private Long id;
     private Long bookingId;
     private String name;
-    private String barcode;
+    private String giftCode;
     private String status;
 
     @PostPersist
@@ -29,6 +29,7 @@ public class Gift {
     public void onPostUpdate(){
         Taken taken = new Taken();
         BeanUtils.copyProperties(this, taken);
+        taken.setStatus("Taken Gift");
         taken.publishAfterCommit();
 
 
@@ -56,12 +57,12 @@ public class Gift {
     public void setName(String name) {
         this.name = name;
     }
-    public String getBarcode() {
-        return barcode;
+    public String getGiftCode() {
+        return giftCode;
     }
 
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
+    public void setGiftCode(String giftCode) {
+        this.giftCode = giftCode;
     }
     public String getStatus() {
         return status;

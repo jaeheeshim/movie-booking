@@ -103,7 +103,7 @@ public class MypageViewHandler {
                 for(Mypage mypage  : mypageList){
                     // view 객체에 이벤트의 eventDirectValue 를 set 함
                     mypage.setGiftName(applied.getName());
-                    mypage.setGiftBarcode(applied.getBarcode());
+                    mypage.setGiftCode(applied.getGiftCode());
                     mypage.setStatus(applied.getStatus());
                     // view 레파지 토리에 save
                     mypageRepository.save(mypage);

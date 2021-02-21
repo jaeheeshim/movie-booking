@@ -5,7 +5,7 @@ public class Applied extends AbstractEvent {
     private Long id;
     private Long bookingId;
     private String name;
-    private String barcode;
+    private String giftCode;
     private String status;
 
     public Long getId() {
@@ -29,12 +29,12 @@ public class Applied extends AbstractEvent {
     public void setName(String name) {
         this.name = name;
     }
-    public String getBarcode() {
-        return barcode;
+    public String getGiftCode() {
+        return giftCode;
     }
 
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
+    public void setGiftCode(String giftCode) {
+        this.giftCode = giftCode;
     }
     public String getStatus() {
         return status;
