@@ -19,6 +19,7 @@ public class Ticket {
 
     @PostPersist
     public void onPostPersist(){
+
         Created created = new Created();
         BeanUtils.copyProperties(this, created);
         created.publishAfterCommit();
@@ -28,9 +29,14 @@ public class Ticket {
 
     @PostUpdate
     public void onPostUpdate(){
-        Printed printed = new Printed();
-        BeanUtils.copyProperties(this, printed);
-        printed.publishAfterCommit();
+
+        if("Printed".equals(status)){
+            Printed printed = new Printed();
+            BeanUtils.copyProperties(this, printed);
+            printed.setStatus("Printed");
+            printed.publishAfterCommit();
+
+        }
 
 
     }

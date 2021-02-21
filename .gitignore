@@ -28,3 +28,10 @@ gateway/target/*
 mypage/target/*
 payment/target/*
 ticket/target/*
+
+
+book/.settings/*
+gateway/.settings/*
+mypage/.settings/*
+payment/.settings/*
+ticket/.settings/*
