@@ -129,49 +129,37 @@ public interface 결제이력Repository extends PagingAndSortingRepository<결�
 ```
 - 적용 후 REST API 의 테스트
 ```
-# app 서비스의 주문처리
-http localhost:8081/orders item="통닭"
+# book 서비스의 예매처리
+http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalPrice=10000
 
-# store 서비스의 배달처리
-http localhost:8083/주문처리s orderId=1
+# ticket 서비스의 출력처리
+http PATCH http://localhost:8088/tickets/1 status="Printed"
 
 # 주문 상태 확인
-http localhost:8081/orders/1
+http http://localhost:8088/books/1
 
 ```
 
 
 ## 폴리글랏 퍼시스턴스
 
-앱프런트 (app) 는 서비스 특성상 많은 사용자의 유입과 상품 정보의 다양한 콘텐츠를 저장해야 하는 특징으로 인해 RDB 보다는 Document DB / NoSQL 계열의 데이터베이스인 Mongo DB 를 사용하기로 하였다. 이를 위해 order 의 선언에는 @Entity 가 아닌 @Document 로 마킹되었으며, 별다른 작업없이 기존의 Entity Pattern 과 Repository Pattern 적용과 데이터베이스 제품의 설정 (application.yml) 만으로 MongoDB 에 부착시켰다
-
 ```
-# Order.java
+# Book - pom.xml
 
-package fooddelivery;
-
-@Document
-public class Order {
-
-    private String id; // mongo db 적용시엔 id 는 고정값으로 key가 자동 발급되는 필드기 때문에 @Id 나 @GeneratedValue 를 주지 않아도 된다.
-    private String item;
-    private Integer 수량;
-
-}
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
 
-# 주문Repository.java
-package fooddelivery;
+# Ticket - pom.xml
 
-public interface 주문Repository extends JpaRepository<Order, UUID>{
-}
-
-# application.yml
-
-  data:
-    mongodb:
-      host: mongodb.default.svc.cluster.local
-    database: mongo-example
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
 ```
 
@@ -217,31 +205,44 @@ CMD ["python", "policy-handler.py"]
 - 결제서비스를 호출하기 위하여 Stub과 (FeignClient) 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현 
 
 ```
-# (app) 결제이력Service.java
+# PaymentService.java
 
-package fooddelivery.external;
+package movie.external;
 
-@FeignClient(name="pay", url="http://localhost:8082")//, fallback = 결제이력ServiceFallback.class)
-public interface 결제이력Service {
+@FeignClient(name="payment", url="http://localhost:8082")
+public interface PaymentService {
 
-    @RequestMapping(method= RequestMethod.POST, path="/결제이력s")
-    public void 결제(@RequestBody 결제이력 pay);
+    @RequestMapping(method= RequestMethod.POST, path="/payments")
+    public void pay(@RequestBody Payment payment);
+    
+    @RequestMapping(method= RequestMethod.POST, path="/cancellations")
+    public void cancel(@RequestBody Payment payment);
 
 }
 ```
 
 - 주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
 ```
-# Order.java (Entity)
+# Book.java (Entity)
 
     @PostPersist
     public void onPostPersist(){
-
-        fooddelivery.external.결제이력 pay = new fooddelivery.external.결제이력();
-        pay.setOrderId(getOrderId());
+    
+        Booked booked = new Booked();
+        BeanUtils.copyProperties(this, booked);
+        booked.publishAfterCommit();
+        movie.external.Payment payment = new movie.external.Payment();
         
-        Application.applicationContext.getBean(fooddelivery.external.결제이력Service.class)
-                .결제(pay);
+        System.out.println("*********************");
+        System.out.println("결제 이벤트 발생");
+        System.out.println("*********************");
+
+        // mappings goes here
+        payment.setBookingId(booked.getId());
+        payment.setStatus("Paid");
+        payment.setTotalPrice(booked.getTotalPrice());
+        BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
+            .pay(payment);
     }
 ```
 
