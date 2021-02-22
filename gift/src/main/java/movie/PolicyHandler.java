@@ -2,6 +2,8 @@ package movie;
 
 import movie.config.kafka.KafkaProcessor;
 
+import java.util.Random;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +32,36 @@ public class PolicyHandler{
 
             Gift gift = new Gift();
             gift.setBookingId(printed.getId());
-            gift.setStatus("Gift Applied");
+
+            Random random = new Random();
+            Integer randomValue = random.nextInt(3);
+            switch (randomValue) {	
+                case 0:		
+                    gift.setName("Americano");
+                    gift.setGiftCode("G000");
+                    break;
+                case 1:		
+                    gift.setName("CafeLatte");
+                    gift.setGiftCode("G001");
+                    break; 
+                case 2:
+                    gift.setName("CafeMocha");
+                    gift.setGiftCode("G002");
+                    break;
+                case 3:
+                    gift.setName("Cappuccino");
+                    gift.setGiftCode("G003");
+                    break;    
+                default:
+                    gift.setName("Americano");
+                    gift.setGiftCode("G000");
+            };
+  
+        
+        
+
+
+            gift.setStatus("GiftApplied");
 
             giftRepository.save(gift);
         }

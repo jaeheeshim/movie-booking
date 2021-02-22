@@ -23,8 +23,7 @@ public class Book {
     public void onPostPersist(){
         Booked booked = new Booked();
         BeanUtils.copyProperties(this, booked);
-        booked.publishAfterCommit();
-
+        
         //Following code causes dependency to external APIs
         // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
 
@@ -40,7 +39,8 @@ public class Book {
         payment.setTotalPrice(booked.getTotalPrice());
         BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
             .pay(payment);
-
+        
+        booked.publishAfterCommit();
     }
 
     @PreRemove

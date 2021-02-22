@@ -54,4 +54,21 @@ public class PolicyHandler{
         }
     };
 
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverTaken_(@Payload Taken taken){
+
+        
+        if(taken.isMe()){
+
+            System.out.println("======================================");
+            System.out.println("**** listener  : " + taken.toJson());
+            System.out.println("======================================");
+            bookRepository.findById(taken.getBookingId()).ifPresent((book)->{
+                book.setStatus("GiftTakingComplete");
+                bookRepository.save(book);
+            });
+
+        }
+    };
+
 }
