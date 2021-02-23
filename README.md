@@ -54,7 +54,7 @@ MSA/DDD/Event Storming/EDA 를 포괄하는 분석/설계/구현/운영 전단�
 ## Event Storming 결과
 
 - MSAEz 로 모델링한 이벤트스토밍 결과: http://www.msaez.io/#/storming/R6mhRNYqDQNZGOm0lF9mkOuyQb22/mine/71ff9c1518aee16ab14394848c5ab5f8
-![스크린샷 2021-02-18 오전 10 16 42](https://user-images.githubusercontent.com/28583602/108849737-dc7d5180-7625-11eb-8d7f-0572966f5455.png)
+![스크린샷 2021-02-23 오후 10 26 44](https://user-images.githubusercontent.com/28583602/108850044-37af4400-7626-11eb-9ffb-9153bafb3a6d.png)
 
 
 ## 헥사고날 아키텍처 다이어그램 도출
@@ -77,104 +77,104 @@ mvn spring-boot:run
 
 cd mypage
 mvn srping-boot:run
+
+cd review
+mvn srping-boot:run
 ```
 
 ## 동기식 호출
 
-분석단계에서의 조건 중 하나로 예매(book)->결제(pay) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다.
+분석단계에서의 조건 중 하나로 (ticket)->(review) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다.
 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
 
-- 결제서비스를 호출하기 위하여 Stub과 (FeignClient) 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
+- Review 서비스를 호출하기 위하여 Stub과 (FeignClient) 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
 
 ```
-# PaymentService.java
+# ReviewService.java
 
 package movie.external;
 
-@FeignClient(name="payment", url="http://localhost:8082")
-public interface PaymentService {
+@FeignClient(name="review", url="http://localhost:8085")
+public interface ReviewService {
 
-    @RequestMapping(method= RequestMethod.POST, path="/payments")
-    public void pay(@RequestBody Payment payment);
-
-    @RequestMapping(method= RequestMethod.POST, path="/cancellations")
-    public void cancel(@RequestBody Payment payment);
+    @RequestMapping(method= RequestMethod.POST, path="/reviews")
+    public void create(@RequestBody Review review);
 
 }
 ```
 
-- 예매 직후(@PostPersist) 결제를 요청하도록 처리
+- Print 직후(@PostUpdate) 결제를 요청하도록 처리
 
 ```
-# Book.java (Entity)
+# Ticket.java (Entity)
 
     @PostPersist
-    public void onPostPersist(){
+    public void onPostUpdate(){
+        if("Printed".equals(status)){
+            Printed printed = new Printed();
+            BeanUtils.copyProperties(this, printed);
+            printed.setStatus("Printed");
+            printed.publishAfterCommit();
+            
+            movie.external.Review review = new movie.external.Review();
+        
+            // mappings goes here
+            review.setBookingId(printed.getBookingId());
+            review.setStatus("Waiting Review");
+            TicketApplication.applicationContext.getBean(movie.external.ReviewService.class)
+                .create(review);
 
-        Booked booked = new Booked();
-        BeanUtils.copyProperties(this, booked);
-        booked.publishAfterCommit();
-        movie.external.Payment payment = new movie.external.Payment();
-
-        System.out.println("*********************");
-        System.out.println("결제 이벤트 발생");
-        System.out.println("*********************");
-
-        // mappings goes here
-        payment.setBookingId(booked.getId());
-        payment.setStatus("Paid");
-        payment.setTotalPrice(booked.getTotalPrice());
-        BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
-            .pay(payment);
+        }
     }
 ```
 
-- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인
+- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, Review 시스템이 장애가 나면 Ticekt 출력도 불가능 하다는 것을 확인
 
 
-- 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
+- Review 서비스를 잠시 내려놓음 (ctrl+c)
 
-1. 주문처리
+1. Print 처리
 
-<img width="688" alt="스크린샷 2021-02-23 오전 11 16 37" src="https://user-images.githubusercontent.com/28583602/108794189-ab226880-75c8-11eb-8692-cb06effe8bb2.png">
+<img width="1052" alt="스크린샷 2021-02-23 오후 10 36 22" src="https://user-images.githubusercontent.com/28583602/108851240-90331100-7627-11eb-93f1-4f8e82440ee2.png">
 
 
-2. 결제서비스 재기동
+2. Review서비스 재기동
 ```
-cd ../payment
+cd ../review
 mvn spring-boot:run
 ```
 
-3. 주문처리
+3. Print 처리
 
-<img width="692" alt="스크린샷 2021-02-23 오전 11 18 23" src="https://user-images.githubusercontent.com/28583602/108794296-da38da00-75c8-11eb-8d86-fce182516fa7.png">
+<img width="822" alt="스크린샷 2021-02-23 오후 10 40 37" src="https://user-images.githubusercontent.com/28583602/108851787-28c99100-7628-11eb-8a4e-ecec666ace87.png">
 
 
 ## 비동기식 호출
 
-결제가 이루어진 후에 Ticket시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리한다.
+Review가 작성된 후에 Book 시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리한다.
 
-- 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 예매  되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
+- 이를 위하여 Review 이력에 기록을 남긴 후에 곧바로 도메인 이벤트를 카프카로 송출한다(Publish)
 
 ```
 package movie;
 
 @Entity
-@Table(name="Book_table")
-public class Payment {
+@Table(name="Review_table")
+public class Review {
 
  ...
-    @PrePersist
-    public void onPrePersist(){
-        Booked booked = new Booked();
-        BeanUtils.copyProperties(this, booked);
-        booked.publishAfterCommit();
+ 
+    @PostUpdate
+    public void onPostUpdate(){
+        WrittenReview writtenReview = new WrittenReview();
+        BeanUtils.copyProperties(this, writtenReview);
+        writtenReview.setStatus("Updated Review");
+        writtenReview.publishAfterCommit();
     }
-
 }
 ```
 
-- Ticket 서비스에서는 Booked 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
+- Book 서비스에서는 WrittenReview 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
 
 ```
 package movie;
@@ -185,47 +185,44 @@ package movie;
 public class PolicyHandler{
 
     @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverBooked_(@Payload Booked booked){
-
-        if(booked.isMe()){
+    public void whenWrittenReviw(@Payload WrittenReview writtenReview) {
+        if (writtenReview.isMe()) {
+            // view 객체 생성
             System.out.println("======================================");
-            System.out.println("##### listener  : " + booked.toJson());
+            System.out.println("**** listener  : " + writtenReview.toJson());
             System.out.println("======================================");
+            bookRepository.findById(writtenReview.getBookingId()).ifPresent((book)->{
+                book.setStatus("ReviewComplete");
+                bookRepository.save(book);
+            });
             
-            Ticket ticket = new Ticket();
-            ticket.setBookingId(booked.getId());
-            ticket.setMovieName(booked.getMovieName());
-            ticket.setQty(booked.getQty());
-            ticket.setSeat(booked.getSeat());
-            ticket.setStatus("Waiting");
-
-            ticketRepository.save(ticket);
         }
-    }
+    }  
 
 }
 
 ```
-- Ticket 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, Ticket 시스템이 유지보수로 인해 잠시 내려간 상태라도 예매 받는데 문제가 없다:
+- Book 시스템은 Review 서비스와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, Book에서 2를 예매 후 인해 잠시 내려간 상태라도 Reviw를 작성하는데 문제가 없다
 
-- 상점 서비스 (store) 를 잠시 내려놓음 (ctrl+c)
+- Book 서비스에 예매 이벤트 발생 후 잠시 내려놓음 (ctrl+c)
 
-1. 주문처리
-<img width="1056" alt="스크린샷 2021-02-23 오후 1 12 47" src="https://user-images.githubusercontent.com/28583602/108801338-d3b25e80-75d8-11eb-9a01-094c0c926c03.png">
-<img width="1441" alt="스크린샷 2021-02-23 오후 1 13 01" src="https://user-images.githubusercontent.com/28583602/108801356-dca33000-75d8-11eb-8a05-fd69895406f4.png">
-
-
-2. 주문상태 확인
-<img width="859" alt="스크린샷 2021-02-23 오후 1 15 10" src="https://user-images.githubusercontent.com/28583602/108801469-2a1f9d00-75d9-11eb-8a08-b0a3a64df1ab.png">
-
-3. Ticket 서비스 기동
+1. 예매 처리 후 서비스 내려놓음
+<img width="1014" alt="스크린샷 2021-02-23 오후 10 44 46" src="https://user-images.githubusercontent.com/28583602/108852274-bd33f380-7628-11eb-8eb9-70391b54f9c2.png">
 ```
-cd ../ticket
+cmd + C
+```
+
+2. Review 상태 확인
+<img width="876" alt="스크린샷 2021-02-23 오후 10 46 52" src="https://user-images.githubusercontent.com/28583602/108852497-07b57000-7629-11eb-8826-18d7c8554597.png">
+
+3. Book 서비스 기동
+```
+cd ../book
 mvn spring-boot:run
 ```
 
 4. 주문상태 확인
-<img width="882" alt="스크린샷 2021-02-23 오후 1 19 34" src="https://user-images.githubusercontent.com/28583602/108801714-c8136780-75d9-11eb-8a24-1022857d70e4.png">
+<img width="886" alt="스크린샷 2021-02-23 오후 10 52 17" src="https://user-images.githubusercontent.com/28583602/108853203-c96c8080-7629-11eb-89f8-b91273e2c39c.png">
 
 
 ## Gateway
@@ -256,7 +253,10 @@ spring:
           uri: http://localhost:8084
           predicates:
             - Path=/tickets/** 
-          
+        - id: review
+          uri: http://localhost:8085
+          predicates:
+            - Path=/reviews/**             
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -279,11 +279,11 @@ http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalP
 # ticket 서비스의 출력처리
 http PATCH http://localhost:8088/tickets/1 status="Printed"
 
-# 주문 상태 확인
-http http://localhost:8088/books/1
+# review 서비스의 작성 처리
+http PATCH http://localhost:8088/reviews/1 score=10 contents="VeryGood"
 
 ```
-<img width="1180" alt="스크린샷 2021-02-23 오후 1 32 28" src="https://user-images.githubusercontent.com/28583602/108802418-94394180-75db-11eb-93ab-c05554651c89.png">
+<img width="1077" alt="스크린샷 2021-02-23 오후 10 54 24" src="https://user-images.githubusercontent.com/28583602/108853441-151f2a00-762a-11eb-98d9-6aedbe8c27ed.png">
 
 ## Mypage
 
@@ -298,13 +298,12 @@ http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalP
 # ticket 서비스의 출력처리
 http PATCH http://localhost:8088/tickets/1 status="Printed"
 
-# 주문 상태 확인
-http http://localhost:8088/books/1
+# review 서비스의 작성 처리
+http PATCH http://localhost:8088/reviews/1 score=10 contents="VeryGood"
 
 ```
 
-<img width="885" alt="스크린샷 2021-02-23 오후 1 33 46" src="https://user-images.githubusercontent.com/28583602/108802487-c34fb300-75db-11eb-8be8-1ff696dd8563.png">
-<img width="1099" alt="스크린샷 2021-02-23 오후 1 34 36" src="https://user-images.githubusercontent.com/28583602/108802521-dfebeb00-75db-11eb-9f41-6382e7b5feee.png">
+<img width="717" alt="스크린샷 2021-02-23 오후 10 58 21" src="https://user-images.githubusercontent.com/28583602/108853937-a2fb1500-762a-11eb-9acb-789fec550b93.png">
 
 ## Polyglot
 
@@ -318,7 +317,7 @@ http http://localhost:8088/books/1
 		</dependency>
 
 
-# Ticket - pom.xml
+# Review - pom.xml
 
 		<dependency>
 			<groupId>org.hsqldb</groupId>
