@@ -224,7 +224,7 @@ mvn spring-boot:run
 <img width="882" alt="스크린샷 2021-02-23 오후 1 19 34" src="https://user-images.githubusercontent.com/28583602/108801714-c8136780-75d9-11eb-8a24-1022857d70e4.png">
 
 
-## GateWay
+## Gateway
 
 - Gateway의 application.yaml에 모든 서비스들이 8088 포트를 사용할 수 있도록 한다.
 
@@ -266,7 +266,7 @@ spring:
 
 ```
 
-- 8088 포트를 사용하여 API를 발생시킨다..
+- 8088 포트를 사용하여 API를 발생시킨다.
 
 ```
 # book 서비스의 예매처리
