@@ -295,26 +295,26 @@ public class PolicyHandler{
 }
 
 ```
-- 상점 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, 상점시스템이 유지보수로 인해 잠시 내려간 상태라도 주문을 받는데 문제가 없다:
+- Ticket 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, Ticket 시스템이 유지보수로 인해 잠시 내려간 상태라도 예매 받는데 문제가 없다:
 
 - 상점 서비스 (store) 를 잠시 내려놓음 (ctrl+c)
 
 1. 주문처리
-<img width="1434" alt="스크린샷 2021-02-23 오후 1 03 42" src="https://user-images.githubusercontent.com/28583602/108800877-a74a1280-75d7-11eb-8f60-d32043fe1201.png">
-
+<img width="1056" alt="스크린샷 2021-02-23 오후 1 12 47" src="https://user-images.githubusercontent.com/28583602/108801338-d3b25e80-75d8-11eb-9a01-094c0c926c03.png">
+<img width="1441" alt="스크린샷 2021-02-23 오후 1 13 01" src="https://user-images.githubusercontent.com/28583602/108801356-dca33000-75d8-11eb-8a05-fd69895406f4.png">
 
 
 2. 주문상태 확인
-<img width="688" alt="스크린샷 2021-02-23 오전 11 16 37" src="https://user-images.githubusercontent.com/28583602/108800890-aa450300-75d7-11eb-90ff-794def1d5a65.png">
+<img width="859" alt="스크린샷 2021-02-23 오후 1 15 10" src="https://user-images.githubusercontent.com/28583602/108801469-2a1f9d00-75d9-11eb-8a08-b0a3a64df1ab.png">
 
-3. 상점 서비스 기동
+3. Ticket 서비스 기동
 ```
-cd 상점
+cd ../ticket
 mvn spring-boot:run
 ```
 
 4. 주문상태 확인
-<img width="1448" alt="스크린샷 2021-02-23 오후 1 02 28" src="https://user-images.githubusercontent.com/28583602/108800883-a913d600-75d7-11eb-9f60-64fb6ceb965a.png"> 
+<img width="882" alt="스크린샷 2021-02-23 오후 1 19 34" src="https://user-images.githubusercontent.com/28583602/108801714-c8136780-75d9-11eb-8a24-1022857d70e4.png">
 
 
 # 운영
