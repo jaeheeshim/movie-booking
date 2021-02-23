@@ -8,6 +8,7 @@ public class Booked extends AbstractEvent {
     private String movieName;
     private String status;
     private Integer totalPrice;
+    private String name;
 
     public Long getId() {
         return id;
@@ -50,5 +51,13 @@ public class Booked extends AbstractEvent {
 
     public void setTotalPrice(Integer totalPrice) {
         this.totalPrice = totalPrice;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }
