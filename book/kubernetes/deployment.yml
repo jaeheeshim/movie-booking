@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: $_PROJECT_NAME
+  name: book
   namespace: movie
   labels:
-    app: $_PROJECT_NAME
+    app: book
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: $_PROJECT_NAME
+      app: book
   template:
     metadata:
       labels:
-        app: $_PROJECT_NAME
+        app: book
     spec:
       containers:
-        - name: $_PROJECT_NAME
-          image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skteam03-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+        - name: book
+          image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skteam03-book:v10
           ports:
             - containerPort: 8080
           env:
