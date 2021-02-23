@@ -465,8 +465,54 @@ readinessProbe:
 ```
 <img width="1114" alt="스크린샷 2021-02-23 오후 1 49 30" src="https://user-images.githubusercontent.com/28583602/108803416-f4c97e00-75dd-11eb-9663-74bcaf27ddbf.png">
 
+## Config Map
+
+- deployment.yml에 env 추가
 
 
+```
+# deployment.yaml
+
+  env:
+    - name: NAME
+      valueFrom:
+	configMapKeyRef:
+	  name: moviecm
+	  key: text1
+
+```
+
+- 예매와 동시에 환경변수로 설정한 NAME이 들어가도록 코드를 변경
+
+```
+@Id
+@GeneratedValue(strategy=GenerationType.AUTO)
+
+...
+
+private String name = System.getenv("NAME");
+
+```
+- configmap.yaml 작성
+
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: moviecm
+  namespace: movie
+data:
+  text1: HyesunJeon
+
+```
+
+- book pod에 들어가서 환경변수 확인
+
+<img width="1118" alt="스크린샷 2021-02-23 오후 7 02 08" src="https://user-images.githubusercontent.com/28583602/108828012-a3cf7f00-7609-11eb-952e-3cfb6e429bae.png">
+
+- 예매와 동시에 name에 환경변수 적용 
+
+<img width="1483" alt="스크린샷 2021-02-23 오후 7 03 21" src="https://user-images.githubusercontent.com/28583602/108828129-ceb9d300-7609-11eb-9f9d-228ca82b8f96.png">
 
 
 
