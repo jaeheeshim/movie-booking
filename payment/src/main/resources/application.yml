@@ -35,10 +35,7 @@ logging:
   level:
     org.hibernate.type: trace
     org.springframework.cloud: debug
-hystrix:
-  command:
-    default:
-      execution.isolation.thread.timeoutInMilliseconds: 610
+
 server:
   port: 8082
 ---
@@ -66,3 +63,8 @@ spring:
         event-out:
           destination: movie
           contentType: application/json
+
+hystrix:
+    command:
+      default:
+        execution.isolation.thread.timeoutInMilliseconds: 610
