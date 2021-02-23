@@ -62,3 +62,8 @@ spring:
         event-out:
           destination: movie
           contentType: application/json
+
+hystrix:
+  command:
+    default:
+      execution.isolation.thread.timeoutInMilliseconds: 1000
