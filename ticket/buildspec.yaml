@@ -82,16 +82,15 @@ phases:
                   ports:
                     - containerPort: 8080
                   readinessProbe:
-                    httpGet:
-                      path: /abcd
-                      port: 8080
+                    tcpSocket:
+                      port: 8087
                     initialDelaySeconds: 10
                     timeoutSeconds: 2
                     periodSeconds: 5
                     failureThreshold: 10
                   livenessProbe:
                     httpGet:
-                      path: /actuator/health
+                      path: /abc
                       port: 8080
                     initialDelaySeconds: 120
                     timeoutSeconds: 2
