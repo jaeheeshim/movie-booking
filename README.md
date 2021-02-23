@@ -208,6 +208,8 @@ public class PolicyHandler{
 
 1. 예매 처리 후 서비스 내려놓음
 <img width="1014" alt="스크린샷 2021-02-23 오후 10 44 46" src="https://user-images.githubusercontent.com/28583602/108852274-bd33f380-7628-11eb-8eb9-70391b54f9c2.png">
+
+
 ```
 cmd + C
 ```
