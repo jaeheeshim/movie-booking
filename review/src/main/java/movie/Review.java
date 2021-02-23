@@ -33,7 +33,6 @@ public class Review {
         writtenReview.publishAfterCommit();
     }
 
-
     public Long getId() {
         return id;
     }

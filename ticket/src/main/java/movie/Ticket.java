@@ -35,6 +35,16 @@ public class Ticket {
             BeanUtils.copyProperties(this, printed);
             printed.setStatus("Printed");
             printed.publishAfterCommit();
+            
+            
+            movie.external.Review review = new movie.external.Review();
+        
+   
+            // mappings goes here
+            review.setBookingId(printed.getBookingId());
+            review.setStatus("Waiting Review");
+            TicketApplication.applicationContext.getBean(movie.external.ReviewService.class)
+                .create(review);
 
         }
 

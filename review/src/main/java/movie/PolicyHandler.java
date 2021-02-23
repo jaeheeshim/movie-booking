@@ -19,20 +19,4 @@ public class PolicyHandler{
 
     }
 
-    @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverPrinted_(@Payload Printed printed){
-
-        if(printed.isMe()){
-            System.out.println("======================================");
-            System.out.println("##### listener  : " + printed.toJson());
-            System.out.println("======================================");
-            
-            Review review = new Review();
-            review.setBookingId(printed.getId());
-            review.setStatus("Waiting Review");
-
-            reviewRepository.save(review);
-        }
-    }
-
 }
