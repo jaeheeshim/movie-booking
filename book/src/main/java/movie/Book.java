@@ -18,6 +18,7 @@ public class Book {
     private String movieName;
     private String status="Registered";
     private Integer totalPrice;
+    private String name = System.getenv("NAME");
 
     @PostPersist
     public void onPostPersist(){
@@ -113,7 +114,13 @@ public class Book {
         this.totalPrice = totalPrice;
     }
 
+    public String getName() {
+        return name;
+    }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 
 
 }
