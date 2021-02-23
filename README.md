@@ -221,7 +221,7 @@ public interface PaymentService {
 - 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인:
 
 
-# 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
+- 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
 
 1. 주문처리
 
@@ -241,29 +241,29 @@ mvn spring-boot:run
 
 ## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
 
-결제가 이루어진 후에 상점시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 상점 시스템의 처리를 위하여 결제주문이 블로킹 되지 않아도록 처리한다.
+결제가 이루어진 후에 Ticket시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리한다.
 
-- 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
+- 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 예매  되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
 
 ```
 package movie;
 
 @Entity
-@Table(name="Payment_table")
+@Table(name="Book_table")
 public class Payment {
 
  ...
     @PrePersist
     public void onPrePersist(){
-	    Paid paid = new Paid();
-	    BeanUtils.copyProperties(this, paid);
-	    paid.publishAfterCommit();
+        Booked booked = new Booked();
+        BeanUtils.copyProperties(this, booked);
+        booked.publishAfterCommit();
     }
 
 }
 ```
 
-- 상점 서비스에서는 결제승인 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
+- Ticket 서비스에서는 Booked 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
 
 ```
 package movie;
@@ -274,18 +274,21 @@ package movie;
 public class PolicyHandler{
 
     @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverPaid_(@Payload Paid paid){
+    public void wheneverBooked_(@Payload Booked booked){
 
-        if(paid.isMe()){
-
+        if(booked.isMe()){
             System.out.println("======================================");
-            System.out.println("**** listener  : " + paid.toJson());
+            System.out.println("##### listener  : " + booked.toJson());
             System.out.println("======================================");
-            bookRepository.findById(paid.getBookingId()).ifPresent((book)->{
-                book.setStatus("PaidComplete");
-                bookRepository.save(book);
-            });
+            
+            Ticket ticket = new Ticket();
+            ticket.setBookingId(booked.getId());
+            ticket.setMovieName(booked.getMovieName());
+            ticket.setQty(booked.getQty());
+            ticket.setSeat(booked.getSeat());
+            ticket.setStatus("Waiting");
 
+            ticketRepository.save(ticket);
         }
     }
 
