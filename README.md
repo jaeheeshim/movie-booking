@@ -221,7 +221,7 @@ public interface PaymentService {
 - 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인:
 
 
-# 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
+- 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
 
 1. 주문처리
 
@@ -241,29 +241,29 @@ mvn spring-boot:run
 
 ## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
 
-결제가 이루어진 후에 상점시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 상점 시스템의 처리를 위하여 결제주문이 블로킹 되지 않아도록 처리한다.
+결제가 이루어진 후에 Ticket시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리한다.
 
-- 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
+- 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 예매  되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
 
 ```
 package movie;
 
 @Entity
-@Table(name="Payment_table")
+@Table(name="Book_table")
 public class Payment {
 
  ...
     @PrePersist
     public void onPrePersist(){
-	    Paid paid = new Paid();
-	    BeanUtils.copyProperties(this, paid);
-	    paid.publishAfterCommit();
+        Booked booked = new Booked();
+        BeanUtils.copyProperties(this, booked);
+        booked.publishAfterCommit();
     }
 
 }
 ```
 
-- 상점 서비스에서는 결제승인 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
+- Ticket 서비스에서는 Booked 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
 
 ```
 package movie;
@@ -274,63 +274,48 @@ package movie;
 public class PolicyHandler{
 
     @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverPaid_(@Payload Paid paid){
+    public void wheneverBooked_(@Payload Booked booked){
 
-        if(paid.isMe()){
-
+        if(booked.isMe()){
             System.out.println("======================================");
-            System.out.println("**** listener  : " + paid.toJson());
+            System.out.println("##### listener  : " + booked.toJson());
             System.out.println("======================================");
-            bookRepository.findById(paid.getBookingId()).ifPresent((book)->{
-                book.setStatus("PaidComplete");
-                bookRepository.save(book);
-            });
+            
+            Ticket ticket = new Ticket();
+            ticket.setBookingId(booked.getId());
+            ticket.setMovieName(booked.getMovieName());
+            ticket.setQty(booked.getQty());
+            ticket.setSeat(booked.getSeat());
+            ticket.setStatus("Waiting");
 
+            ticketRepository.save(ticket);
         }
     }
 
 }
 
 ```
+- Ticket 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, Ticket 시스템이 유지보수로 인해 잠시 내려간 상태라도 예매 받는데 문제가 없다:
 
-실제 구현을 하자면, 카톡 등으로 점주는 노티를 받고, 요리를 마친후, 주문 상태를 UI에 입력할테니, 우선 주문정보를 DB에 받아놓은 후, 이후 처리는 해당 Aggregate 내에서 하면 되겠다.:
+- 상점 서비스 (store) 를 잠시 내려놓음 (ctrl+c)
 
+1. 주문처리
+<img width="1056" alt="스크린샷 2021-02-23 오후 1 12 47" src="https://user-images.githubusercontent.com/28583602/108801338-d3b25e80-75d8-11eb-9a01-094c0c926c03.png">
+<img width="1441" alt="스크린샷 2021-02-23 오후 1 13 01" src="https://user-images.githubusercontent.com/28583602/108801356-dca33000-75d8-11eb-8a05-fd69895406f4.png">
+
+
+2. 주문상태 확인
+<img width="859" alt="스크린샷 2021-02-23 오후 1 15 10" src="https://user-images.githubusercontent.com/28583602/108801469-2a1f9d00-75d9-11eb-8a08-b0a3a64df1ab.png">
+
+3. Ticket 서비스 기동
 ```
-  @Autowired 주문관리Repository 주문관리Repository;
-
-  @StreamListener(KafkaProcessor.INPUT)
-  public void whenever결제승인됨_주문정보받음(@Payload 결제승인됨 결제승인됨){
-
-      if(결제승인됨.isMe()){
-          카톡전송(" 주문이 왔어요! : " + 결제승인됨.toString(), 주문.getStoreId());
-
-          주문관리 주문 = new 주문관리();
-          주문.setId(결제승인됨.getOrderId());
-          주문관리Repository.save(주문);
-      }
-  }
-
-```
-
-상점 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, 상점시스템이 유지보수로 인해 잠시 내려간 상태라도 주문을 받는데 문제가 없다:
-
-```
-# 상점 서비스 (store) 를 잠시 내려놓음 (ctrl+c)
-
-#주문처리
-http localhost:8081/orders item=통닭 storeId=1   #Success
-http localhost:8081/orders item=피자 storeId=2   #Success
-
-#주문상태 확인
-http localhost:8080/orders     # 주문상태 안바뀜 확인
-
-#상점 서비스 기동
-cd 상점
+cd ../ticket
 mvn spring-boot:run
-
-#주문상태 확인
-http localhost:8080/orders     # 모든 주문의 상태가 "배송됨"으로 확인
 ```
+
+4. 주문상태 확인
+<img width="882" alt="스크린샷 2021-02-23 오후 1 19 34" src="https://user-images.githubusercontent.com/28583602/108801714-c8136780-75d9-11eb-8a24-1022857d70e4.png">
+
 
 # 운영
 
