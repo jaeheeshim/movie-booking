@@ -54,4 +54,19 @@ public class PolicyHandler{
         }
     };
 
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenWrittenReviw(@Payload WrittenReview writtenReview) {
+        if (writtenReview.isMe()) {
+            // view 객체 생성
+            System.out.println("======================================");
+            System.out.println("**** listener  : " + writtenReview.toJson());
+            System.out.println("======================================");
+            bookRepository.findById(writtenReview.getBookingId()).ifPresent((book)->{
+                book.setStatus("ReviewComplete");
+                bookRepository.save(book);
+            });
+            
+        }
+    }  
+
 }
