@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: payment
+  namespace: movie
   labels:
     app: payment
 spec:
@@ -16,12 +17,17 @@ spec:
     spec:
       containers:
         - name: payment
-          image: username/payment:latest
+          image: 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skteam03-payment:v13
+          resources:
+            requests:
+              cpu: "300m"
+            limits:
+              cpu: "500m"
           ports:
             - containerPort: 8080
           readinessProbe:
             httpGet:
-              path: '/actuator/health'
+              path: /actuator/health
               port: 8080
             initialDelaySeconds: 10
             timeoutSeconds: 2
@@ -29,7 +35,7 @@ spec:
             failureThreshold: 10
           livenessProbe:
             httpGet:
-              path: '/actuator/health'
+              path: /actuator/health
               port: 8080
             initialDelaySeconds: 120
             timeoutSeconds: 2
