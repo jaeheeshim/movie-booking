@@ -4,7 +4,7 @@ env:
   variables:
     _PROJECT_NAME: "ticket"
     _PROJECT_DIR: "ticket"
-    CODEBUILD_RESOLVED_SOURCE_VERSION: "v5"
+    CODEBUILD_RESOLVED_SOURCE_VERSION: "v6"
 
 phases:
   install:
@@ -91,7 +91,7 @@ phases:
                     failureThreshold: 10
                   livenessProbe:
                     httpGet:
-                      path: /abcd
+                      path: /actuator/health
                       port: 8080
                     initialDelaySeconds: 120
                     timeoutSeconds: 2

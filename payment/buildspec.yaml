@@ -4,7 +4,7 @@ env:
   variables:
     _PROJECT_NAME: "payment"
     _PROJECT_DIR: "payment"
-    CODEBUILD_RESOLVED_SOURCE_VERSION: "v5"
+    CODEBUILD_RESOLVED_SOURCE_VERSION: "v6"
 
 phases:
   install:
@@ -83,7 +83,7 @@ phases:
                     - containerPort: 8080
                   readinessProbe:
                     httpGet:
-                      path: /abc
+                      path: /actuator/health
                       port: 8080
                     initialDelaySeconds: 10
                     timeoutSeconds: 2
