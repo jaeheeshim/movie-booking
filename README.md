@@ -75,106 +75,6 @@ cd mypage
 mvn srping-boot:run
 ```
 
-## GateWay
-
-- Gateway의 application.yaml에 모든 서비스들이 8088 포트를 사용할 수 있도록 한다.
-
-
-```
-# gateway.application.yaml
-spring:
-  profiles: default
-  cloud:
-    gateway:
-      routes:
-        - id: book
-          uri: http://localhost:8081
-          predicates:
-            - Path=/books/** 
-        - id: payment
-          uri: http://localhost:8082
-          predicates:
-            - Path=/payments/** 
-        - id: mypage
-          uri: http://localhost:8083
-          predicates:
-            - Path= /mypages/**
-        - id: ticket
-          uri: http://localhost:8084
-          predicates:
-            - Path=/tickets/** 
-          
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins:
-              - "*"
-            allowedMethods:
-              - "*"
-            allowedHeaders:
-              - "*"
-            allowCredentials: true
-
-```
-
-- 8088 포트를 사용하여 API를 발생시킨다..
-
-```
-# book 서비스의 예매처리
-http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalPrice=10000
-
-# ticket 서비스의 출력처리
-http PATCH http://localhost:8088/tickets/1 status="Printed"
-
-# 주문 상태 확인
-http http://localhost:8088/books/1
-
-```
-<img width="1180" alt="스크린샷 2021-02-23 오후 1 32 28" src="https://user-images.githubusercontent.com/28583602/108802418-94394180-75db-11eb-93ab-c05554651c89.png">
-
-## Mypage
-
-- 고객은 예매 상태를 Mypage에서 확인할 수 있다.
-
-- REST API 의 테스트
-
-```
-# book 서비스의 예매처리
-http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalPrice=10000
-
-# ticket 서비스의 출력처리
-http PATCH http://localhost:8088/tickets/1 status="Printed"
-
-# 주문 상태 확인
-http http://localhost:8088/books/1
-
-```
-
-<img width="885" alt="스크린샷 2021-02-23 오후 1 33 46" src="https://user-images.githubusercontent.com/28583602/108802487-c34fb300-75db-11eb-8be8-1ff696dd8563.png">
-<img width="1099" alt="스크린샷 2021-02-23 오후 1 34 36" src="https://user-images.githubusercontent.com/28583602/108802521-dfebeb00-75db-11eb-9f41-6382e7b5feee.png">
-
-## 폴리글랏 퍼시스턴스
-
-```
-# Book - pom.xml
-
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
-
-# Ticket - pom.xml
-
-		<dependency>
-			<groupId>org.hsqldb</groupId>
-			<artifactId>hsqldb</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
-```
-
 ## 동기식 호출 과 Fallback 처리
 
 분석단계에서의 조건 중 하나로 주문(app)->결제(pay) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
@@ -321,6 +221,108 @@ mvn spring-boot:run
 
 4. 주문상태 확인
 <img width="882" alt="스크린샷 2021-02-23 오후 1 19 34" src="https://user-images.githubusercontent.com/28583602/108801714-c8136780-75d9-11eb-8a24-1022857d70e4.png">
+
+
+## GateWay
+
+- Gateway의 application.yaml에 모든 서비스들이 8088 포트를 사용할 수 있도록 한다.
+
+
+```
+# gateway.application.yaml
+spring:
+  profiles: default
+  cloud:
+    gateway:
+      routes:
+        - id: book
+          uri: http://localhost:8081
+          predicates:
+            - Path=/books/** 
+        - id: payment
+          uri: http://localhost:8082
+          predicates:
+            - Path=/payments/** 
+        - id: mypage
+          uri: http://localhost:8083
+          predicates:
+            - Path= /mypages/**
+        - id: ticket
+          uri: http://localhost:8084
+          predicates:
+            - Path=/tickets/** 
+          
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+```
+
+- 8088 포트를 사용하여 API를 발생시킨다..
+
+```
+# book 서비스의 예매처리
+http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalPrice=10000
+
+# ticket 서비스의 출력처리
+http PATCH http://localhost:8088/tickets/1 status="Printed"
+
+# 주문 상태 확인
+http http://localhost:8088/books/1
+
+```
+<img width="1180" alt="스크린샷 2021-02-23 오후 1 32 28" src="https://user-images.githubusercontent.com/28583602/108802418-94394180-75db-11eb-93ab-c05554651c89.png">
+
+## Mypage
+
+- 고객은 예매 상태를 Mypage에서 확인할 수 있다.
+
+- REST API 의 테스트
+
+```
+# book 서비스의 예매처리
+http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalPrice=10000
+
+# ticket 서비스의 출력처리
+http PATCH http://localhost:8088/tickets/1 status="Printed"
+
+# 주문 상태 확인
+http http://localhost:8088/books/1
+
+```
+
+<img width="885" alt="스크린샷 2021-02-23 오후 1 33 46" src="https://user-images.githubusercontent.com/28583602/108802487-c34fb300-75db-11eb-8be8-1ff696dd8563.png">
+<img width="1099" alt="스크린샷 2021-02-23 오후 1 34 36" src="https://user-images.githubusercontent.com/28583602/108802521-dfebeb00-75db-11eb-9f41-6382e7b5feee.png">
+
+## 폴리글랏 퍼시스턴스
+
+```
+# Book - pom.xml
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+
+# Ticket - pom.xml
+
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+```
+
 
 
 # 운영
