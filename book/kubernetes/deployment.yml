@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: book
+  namespace: movie
   labels:
     app: book
 spec:
@@ -16,12 +17,18 @@ spec:
     spec:
       containers:
         - name: book
-          image: username/book:latest
+          image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skteam03-book:v10
           ports:
             - containerPort: 8080
+          env:
+            - name: NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: moviecm
+                  key: text1
           readinessProbe:
             httpGet:
-              path: '/actuator/health'
+              path: /actuator/health
               port: 8080
             initialDelaySeconds: 10
             timeoutSeconds: 2
@@ -29,7 +36,7 @@ spec:
             failureThreshold: 10
           livenessProbe:
             httpGet:
-              path: '/actuator/health'
+              path: /actuator/health
               port: 8080
             initialDelaySeconds: 120
             timeoutSeconds: 2
