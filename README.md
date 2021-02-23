@@ -229,7 +229,9 @@ public interface PaymentService {
 
 
 2. 결제서비스 재기동
+
 cd payment
+
 mvn spring-boot:run
 
 3. 주문처리
