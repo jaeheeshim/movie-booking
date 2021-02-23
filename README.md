@@ -336,7 +336,12 @@ http localhost:8080/orders     # 모든 주문의 상태가 "배송됨"으로 �
 
 ## CI/CD 설정
 
-각 구현체들은 각자의 source repository 에 구성되었고, 사용한 CI/CD 플랫폼은 AWS Codebuild를 사용하였으며, pipeline build script 는 각 프로젝트 폴더 이하에 buildspec.yml 에 포함되었다.
+각 구현체들은 Amazon ECR(Elastic Container Registry)에 구성되었고, 사용한 CI/CD 플랫폼은 AWS Codebuild며, pipeline build script 는 각 프로젝트 폴더 이하에 buildspec.yml 에 포함되었다. 
+
+- 서비스 이미지
+<img width="1655" alt="aws_ecr_team" src="https://user-images.githubusercontent.com/60732832/108799930-0ce8cf80-75d5-11eb-97e9-3e47f8a73595.png">
+
+- Pipeline
 
 ![aws_team_codebuild](https://user-images.githubusercontent.com/60732832/108794185-a958a500-75c8-11eb-9a99-8d6129053774.png)
 
