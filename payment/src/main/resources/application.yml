@@ -35,6 +35,10 @@ logging:
   level:
     org.hibernate.type: trace
     org.springframework.cloud: debug
+hystrix:
+  command:
+    default:
+      execution.isolation.thread.timeoutInMilliseconds: 610
 server:
   port: 8082
 ---
