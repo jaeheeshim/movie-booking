@@ -17,7 +17,12 @@ public class Payment {
 
     @PostPersist
     public void onPostPersist(){
-
+        try {
+            Thread.currentThread().sleep((long) (400 + Math.random() * 220));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
         if("Paid".equals(status)){
             Paid paid = new Paid();
             BeanUtils.copyProperties(this, paid);
@@ -29,6 +34,8 @@ public class Payment {
             paymentCanceled.publishAfterCommit();
 
         }
+
+        
 
     }
 

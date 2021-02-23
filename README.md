@@ -75,103 +75,10 @@ cd mypage
 mvn srping-boot:run
 ```
 
-## DDD 의 적용
+## 동기식 호출
 
-- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다: (예시는 pay 마이크로 서비스). 이때 가능한 현업에서 사용하는 언어 (유비쿼터스 랭귀지)를 그대로 사용하려고 노력했다. 하지만, 일부 구현에 있어서 영문이 아닌 경우는 실행이 불가능한 경우가 있기 때문에 계속 사용할 방법은 아닌것 같다. (Maven pom.xml, Kafka의 topic id, FeignClient 의 서비스 id 등은 한글로 식별자를 사용하는 경우 오류가 발생하는 것을 확인하였다)
-
-```
-package fooddelivery;
-
-import javax.persistence.*;
-import org.springframework.beans.BeanUtils;
-import java.util.List;
-
-@Entity
-@Table(name="결제이력_table")
-public class 결제이력 {
-
-    @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
-    private Long id;
-    private String orderId;
-    private Double 금액;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public String getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
-    public Double get금액() {
-        return 금액;
-    }
-
-    public void set금액(Double 금액) {
-        this.금액 = 금액;
-    }
-
-}
-
-```
-
-- Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형 (RDB or NoSQL) 에 대한 별도의 처리가 없도록 데이터 접근 어댑터를 자동 생성하기 위하여 Spring Data REST 의 RestRepository 를 적용하였다
-
-```
-package fooddelivery;
-
-import org.springframework.data.repository.PagingAndSortingRepository;
-
-public interface 결제이력Repository extends PagingAndSortingRepository<결제이력, Long>{
-}
-```
-
-- 적용 후 REST API 의 테스트
-
-```
-# book 서비스의 예매처리
-http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalPrice=10000
-
-# ticket 서비스의 출력처리
-http PATCH http://localhost:8088/tickets/1 status="Printed"
-
-# 주문 상태 확인
-http http://localhost:8088/books/1
-
-```
-
-## 폴리글랏 퍼시스턴스
-
-```
-# Book - pom.xml
-
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
-
-# Ticket - pom.xml
-
-		<dependency>
-			<groupId>org.hsqldb</groupId>
-			<artifactId>hsqldb</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
-```
-
-## 동기식 호출 과 Fallback 처리
-
-분석단계에서의 조건 중 하나로 주문(app)->결제(pay) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
+분석단계에서의 조건 중 하나로 예매(book)->결제(pay) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다.
+호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
 
 - 결제서비스를 호출하기 위하여 Stub과 (FeignClient) 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
 
@@ -192,7 +99,7 @@ public interface PaymentService {
 }
 ```
 
-- 주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
+- 예매 직후(@PostPersist) 결제를 요청하도록 처리
 
 ```
 # Book.java (Entity)
@@ -218,54 +125,55 @@ public interface PaymentService {
     }
 ```
 
-- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인:
+- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인
 
+
+- 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
+
+1. 주문처리
+
+<img width="688" alt="스크린샷 2021-02-23 오전 11 16 37" src="https://user-images.githubusercontent.com/28583602/108794189-ab226880-75c8-11eb-8692-cb06effe8bb2.png">
+
+
+2. 결제서비스 재기동
 ```
-# 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
-
-#주문처리
-http localhost:8081/orders item=통닭 storeId=1   #Fail
-http localhost:8081/orders item=피자 storeId=2   #Failclea
-
-#결제서비스 재기동
-cd 결제
+cd ../payment
 mvn spring-boot:run
-
-#주문처리
-http localhost:8081/orders item=통닭 storeId=1   #Success
-http localhost:8081/orders item=피자 storeId=2   #Success
 ```
 
-- 또한 과도한 요청시에 서비스 장애가 도미노 처럼 벌어질 수 있다. (서킷브레이커, 폴백 처리는 운영단계에서 설명한다.)
+3. 주문처리
 
-## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
+<img width="692" alt="스크린샷 2021-02-23 오전 11 18 23" src="https://user-images.githubusercontent.com/28583602/108794296-da38da00-75c8-11eb-8d86-fce182516fa7.png">
 
-결제가 이루어진 후에 상점시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 상점 시스템의 처리를 위하여 결제주문이 블로킹 되지 않아도록 처리한다.
 
-- 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
+## 비동기식 호출
+
+결제가 이루어진 후에 Ticket시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리한다.
+
+- 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 예매  되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
 
 ```
-package fooddelivery;
+package movie;
 
 @Entity
-@Table(name="결제이력_table")
-public class 결제이력 {
+@Table(name="Book_table")
+public class Payment {
 
  ...
     @PrePersist
     public void onPrePersist(){
-        결제승인됨 결제승인됨 = new 결제승인됨();
-        BeanUtils.copyProperties(this, 결제승인됨);
-        결제승인됨.publish();
+        Booked booked = new Booked();
+        BeanUtils.copyProperties(this, booked);
+        booked.publishAfterCommit();
     }
 
 }
 ```
 
-- 상점 서비스에서는 결제승인 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
+- Ticket 서비스에서는 Booked 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
 
 ```
-package fooddelivery;
+package movie;
 
 ...
 
@@ -273,65 +181,295 @@ package fooddelivery;
 public class PolicyHandler{
 
     @StreamListener(KafkaProcessor.INPUT)
-    public void whenever결제승인됨_주문정보받음(@Payload 결제승인됨 결제승인됨){
+    public void wheneverBooked_(@Payload Booked booked){
 
-        if(결제승인됨.isMe()){
-            System.out.println("##### listener 주문정보받음 : " + 결제승인됨.toJson());
-            // 주문 정보를 받았으니, 요리를 슬슬 시작해야지..
+        if(booked.isMe()){
+            System.out.println("======================================");
+            System.out.println("##### listener  : " + booked.toJson());
+            System.out.println("======================================");
+            
+            Ticket ticket = new Ticket();
+            ticket.setBookingId(booked.getId());
+            ticket.setMovieName(booked.getMovieName());
+            ticket.setQty(booked.getQty());
+            ticket.setSeat(booked.getSeat());
+            ticket.setStatus("Waiting");
 
+            ticketRepository.save(ticket);
         }
     }
 
 }
 
 ```
+- Ticket 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, Ticket 시스템이 유지보수로 인해 잠시 내려간 상태라도 예매 받는데 문제가 없다:
 
-실제 구현을 하자면, 카톡 등으로 점주는 노티를 받고, 요리를 마친후, 주문 상태를 UI에 입력할테니, 우선 주문정보를 DB에 받아놓은 후, 이후 처리는 해당 Aggregate 내에서 하면 되겠다.:
+- 상점 서비스 (store) 를 잠시 내려놓음 (ctrl+c)
 
+1. 주문처리
+<img width="1056" alt="스크린샷 2021-02-23 오후 1 12 47" src="https://user-images.githubusercontent.com/28583602/108801338-d3b25e80-75d8-11eb-9a01-094c0c926c03.png">
+<img width="1441" alt="스크린샷 2021-02-23 오후 1 13 01" src="https://user-images.githubusercontent.com/28583602/108801356-dca33000-75d8-11eb-8a05-fd69895406f4.png">
+
+
+2. 주문상태 확인
+<img width="859" alt="스크린샷 2021-02-23 오후 1 15 10" src="https://user-images.githubusercontent.com/28583602/108801469-2a1f9d00-75d9-11eb-8a08-b0a3a64df1ab.png">
+
+3. Ticket 서비스 기동
 ```
-  @Autowired 주문관리Repository 주문관리Repository;
-
-  @StreamListener(KafkaProcessor.INPUT)
-  public void whenever결제승인됨_주문정보받음(@Payload 결제승인됨 결제승인됨){
-
-      if(결제승인됨.isMe()){
-          카톡전송(" 주문이 왔어요! : " + 결제승인됨.toString(), 주문.getStoreId());
-
-          주문관리 주문 = new 주문관리();
-          주문.setId(결제승인됨.getOrderId());
-          주문관리Repository.save(주문);
-      }
-  }
-
-```
-
-상점 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, 상점시스템이 유지보수로 인해 잠시 내려간 상태라도 주문을 받는데 문제가 없다:
-
-```
-# 상점 서비스 (store) 를 잠시 내려놓음 (ctrl+c)
-
-#주문처리
-http localhost:8081/orders item=통닭 storeId=1   #Success
-http localhost:8081/orders item=피자 storeId=2   #Success
-
-#주문상태 확인
-http localhost:8080/orders     # 주문상태 안바뀜 확인
-
-#상점 서비스 기동
-cd 상점
+cd ../ticket
 mvn spring-boot:run
-
-#주문상태 확인
-http localhost:8080/orders     # 모든 주문의 상태가 "배송됨"으로 확인
 ```
+
+4. 주문상태 확인
+<img width="882" alt="스크린샷 2021-02-23 오후 1 19 34" src="https://user-images.githubusercontent.com/28583602/108801714-c8136780-75d9-11eb-8a24-1022857d70e4.png">
+
+
+## Gateway
+
+- Gateway의 application.yaml에 모든 서비스들이 8088 포트를 사용할 수 있도록 한다.
+
+
+```
+# gateway.application.yaml
+spring:
+  profiles: default
+  cloud:
+    gateway:
+      routes:
+        - id: book
+          uri: http://localhost:8081
+          predicates:
+            - Path=/books/** 
+        - id: payment
+          uri: http://localhost:8082
+          predicates:
+            - Path=/payments/** 
+        - id: mypage
+          uri: http://localhost:8083
+          predicates:
+            - Path= /mypages/**
+        - id: ticket
+          uri: http://localhost:8084
+          predicates:
+            - Path=/tickets/** 
+          
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+```
+
+- 8088 포트를 사용하여 API를 발생시킨다.
+
+```
+# book 서비스의 예매처리
+http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalPrice=10000
+
+# ticket 서비스의 출력처리
+http PATCH http://localhost:8088/tickets/1 status="Printed"
+
+# 주문 상태 확인
+http http://localhost:8088/books/1
+
+```
+<img width="1180" alt="스크린샷 2021-02-23 오후 1 32 28" src="https://user-images.githubusercontent.com/28583602/108802418-94394180-75db-11eb-93ab-c05554651c89.png">
+
+## Mypage
+
+- 고객은 예매 상태를 Mypage에서 확인할 수 있다.
+
+- REST API 의 테스트
+
+```
+# book 서비스의 예매처리
+http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalPrice=10000
+
+# ticket 서비스의 출력처리
+http PATCH http://localhost:8088/tickets/1 status="Printed"
+
+# 주문 상태 확인
+http http://localhost:8088/books/1
+
+```
+
+<img width="885" alt="스크린샷 2021-02-23 오후 1 33 46" src="https://user-images.githubusercontent.com/28583602/108802487-c34fb300-75db-11eb-8be8-1ff696dd8563.png">
+<img width="1099" alt="스크린샷 2021-02-23 오후 1 34 36" src="https://user-images.githubusercontent.com/28583602/108802521-dfebeb00-75db-11eb-9f41-6382e7b5feee.png">
+
+## 폴리글랏 퍼시스턴스
+
+```
+# Book - pom.xml
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+
+# Ticket - pom.xml
+
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+```
+
+
 
 # 운영
 
-## CI/CD 설정
+## CI/CD 설정 / Pipeline
 
-각 구현체들은 각자의 source repository 에 구성되었고, 사용한 CI/CD 플랫폼은 AWS Codebuild를 사용하였으며, pipeline build script 는 각 프로젝트 폴더 이하에 buildspec.yml 에 포함되었다.
+각 구현체들은 Amazon ECR(Elastic Container Registry)에 구성되었고, 사용한 CI/CD 플랫폼은 AWS Codebuild며, pipeline build script 는 각 프로젝트 폴더 이하에 buildspec.yml 에 포함되었다. 
+
+```
+# ticket/buildspec.yaml
+version: 0.2
+
+env:
+  variables:
+    _PROJECT_NAME: "ticket"
+    _PROJECT_DIR: "ticket"
+    CODEBUILD_RESOLVED_SOURCE_VERSION: "v3"
+
+phases:
+  install:
+    runtime-versions:
+      java: openjdk8
+      docker: 18
+    commands:
+      - echo install kubectl
+      # - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+      # - chmod +x ./kubectl
+      # - mv ./kubectl /usr/local/bin/kubectl
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - echo $_PROJECT_NAME
+      - echo $AWS_ACCOUNT_ID
+      - echo $AWS_DEFAULT_REGION
+      - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo start command
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - cd $_PROJECT_DIR
+      - mvn package -Dmaven.test.skip=true
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skteam03-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION  .
+  post_build:
+    commands:
+      - echo Pushing the Docker image...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skteam03-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo connect kubectl
+      - kubectl config set-cluster k8s --server="$KUBE_URL" --insecure-skip-tls-verify=true
+      - kubectl config set-credentials admin --token="$KUBE_TOKEN"
+      - kubectl config set-context default --cluster=k8s --user=admin
+      - kubectl config use-context default
+      - |
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: $_PROJECT_NAME
+          namespace: movie
+          labels:
+            app: $_PROJECT_NAME
+        spec:
+          ports:
+            - port: 8080
+              targetPort: 8080
+          selector:
+            app: $_PROJECT_NAME
+        EOF
+      - |
+        cat  <<EOF | kubectl apply -f -
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: $_PROJECT_NAME
+          namespace: movie
+          labels:
+            app: $_PROJECT_NAME
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: $_PROJECT_NAME
+          template:
+            metadata:
+              labels:
+                app: $_PROJECT_NAME
+            spec:
+              containers:
+                - name: $_PROJECT_NAME
+                  image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skteam03-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+                  ports:
+                    - containerPort: 8080
+        EOF
+cache:
+  paths:
+    - "/root/.m2/**/*"
+```
+
+- 서비스 이미지
+<img width="1655" alt="aws_ecr_team" src="https://user-images.githubusercontent.com/60732832/108799930-0ce8cf80-75d5-11eb-97e9-3e47f8a73595.png">
+
+- Pipeline
 
 ![aws_team_codebuild](https://user-images.githubusercontent.com/60732832/108794185-a958a500-75c8-11eb-9a99-8d6129053774.png)
+
+## Zero-downtime deploy(Readiness Probe)
+
+- buildspec.yaml 파일에 Readiness Probe 추가
+
+```
+readinessProbe:
+  httpGet:
+    path: /abc
+    port: 8080
+  initialDelaySeconds: 10
+  timeoutSeconds: 2
+  periodSeconds: 5
+  failureThreshold: 10
+
+```
+<img width="1114" alt="스크린샷 2021-02-23 오후 1 49 07" src="https://user-images.githubusercontent.com/28583602/108803393-e8ddbc00-75dd-11eb-964d-cfd5d78cdfdd.png">
+
+
+## Self-healing(Liveness Probe)
+
+- buildspec.yaml 파일에 Liveness Probe 추가
+
+```
+  livenessProbe:
+    httpGet:
+      path: /abc
+      port: 8080
+    initialDelaySeconds: 120
+    timeoutSeconds: 2
+    periodSeconds: 5
+    failureThreshold: 5
+
+```
+<img width="1114" alt="스크린샷 2021-02-23 오후 1 49 30" src="https://user-images.githubusercontent.com/28583602/108803416-f4c97e00-75dd-11eb-9663-74bcaf27ddbf.png">
+
+
+
+
+
+
 
 ## 동기식 호출 / 서킷 브레이킹 / 장애격리
 
@@ -622,71 +760,3 @@ Concurrency:		       96.02
 ```
 
 배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
-
-# 신규 개발 조직의 추가
-
-![image](https://user-images.githubusercontent.com/487999/79684133-1d6c4300-826a-11ea-94a2-602e61814ebf.png)
-
-## 마케팅팀의 추가
-
-    - KPI: 신규 고객의 유입률 증대와 기존 고객의 충성도 향상
-    - 구현계획 마이크로 서비스: 기존 customer 마이크로 서비스를 인수하며, 고객에 음식 및 맛집 추천 서비스 등을 제공할 예정
-
-## 이벤트 스토밍
-
-    ![image](https://user-images.githubusercontent.com/487999/79685356-2b729180-8273-11ea-9361-a434065f2249.png)
-
-## 헥사고날 아키텍처 변화
-
-![image](https://user-images.githubusercontent.com/487999/79685243-1d704100-8272-11ea-8ef6-f4869c509996.png)
-
-## 구현
-
-기존의 마이크로 서비스에 수정을 발생시키지 않도록 Inbund 요청을 REST 가 아닌 Event 를 Subscribe 하는 방식으로 구현. 기존 마이크로 서비스에 대하여 아키텍처나 기존 마이크로 서비스들의 데이터베이스 구조와 관계없이 추가됨.
-
-## 운영과 Retirement
-
-Request/Response 방식으로 구현하지 않았기 때문에 서비스가 더이상 불필요해져도 Deployment 에서 제거되면 기존 마이크로 서비스에 어떤 영향도 주지 않음.
-
-- [비교] 결제 (pay) 마이크로서비스의 경우 API 변화나 Retire 시에 app(주문) 마이크로 서비스의 변경을 초래함:
-
-예) API 변화시
-
-```
-# Order.java (Entity)
-
-    @PostPersist
-    public void onPostPersist(){
-
-        fooddelivery.external.결제이력 pay = new fooddelivery.external.결제이력();
-        pay.setOrderId(getOrderId());
-
-        Application.applicationContext.getBean(fooddelivery.external.결제이력Service.class)
-                .결제(pay);
-
-                -->
-
-        Application.applicationContext.getBean(fooddelivery.external.결제이력Service.class)
-                .결제2(pay);
-
-    }
-```
-
-예) Retire 시
-
-```
-# Order.java (Entity)
-
-    @PostPersist
-    public void onPostPersist(){
-
-        /**
-        fooddelivery.external.결제이력 pay = new fooddelivery.external.결제이력();
-        pay.setOrderId(getOrderId());
-
-        Application.applicationContext.getBean(fooddelivery.external.결제이력Service.class)
-                .결제(pay);
-
-        **/
-    }
-```

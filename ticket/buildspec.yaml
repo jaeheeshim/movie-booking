@@ -4,7 +4,7 @@ env:
   variables:
     _PROJECT_NAME: "ticket"
     _PROJECT_DIR: "ticket"
-    CODEBUILD_RESOLVED_SOURCE_VERSION: "v4"
+    CODEBUILD_RESOLVED_SOURCE_VERSION: "v6"
 
 phases:
   install:
@@ -82,15 +82,16 @@ phases:
                   ports:
                     - containerPort: 8080
                   readinessProbe:
-                    tcpSocket:
-                      port: 8087
+                    httpGet:
+                      path: /actuator/health
+                      port: 8080
                     initialDelaySeconds: 10
                     timeoutSeconds: 2
                     periodSeconds: 5
                     failureThreshold: 10
                   livenessProbe:
                     httpGet:
-                      path: /abc
+                      path: /actuator/health
                       port: 8080
                     initialDelaySeconds: 120
                     timeoutSeconds: 2
