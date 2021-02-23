@@ -223,15 +223,17 @@ public interface PaymentService {
 
 # 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
 
-#주문처리
+1. 주문처리
+
 <img width="688" alt="스크린샷 2021-02-23 오전 11 16 37" src="https://user-images.githubusercontent.com/28583602/108794189-ab226880-75c8-11eb-8692-cb06effe8bb2.png">
 
 
-#결제서비스 재기동
+2. 결제서비스 재기동
 cd payment
 mvn spring-boot:run
 
-#주문처리
+3. 주문처리
+
 <img width="692" alt="스크린샷 2021-02-23 오전 11 18 23" src="https://user-images.githubusercontent.com/28583602/108794296-da38da00-75c8-11eb-8d86-fce182516fa7.png">
 
 
