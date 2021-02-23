@@ -246,18 +246,18 @@ mvn spring-boot:run
 - 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
 
 ```
-package fooddelivery;
+package movie;
 
 @Entity
-@Table(name="결제이력_table")
-public class 결제이력 {
+@Table(name="Payment_table")
+public class Payment {
 
  ...
     @PrePersist
     public void onPrePersist(){
-        결제승인됨 결제승인됨 = new 결제승인됨();
-        BeanUtils.copyProperties(this, 결제승인됨);
-        결제승인됨.publish();
+	    Paid paid = new Paid();
+	    BeanUtils.copyProperties(this, paid);
+	    paid.publishAfterCommit();
     }
 
 }
@@ -266,7 +266,7 @@ public class 결제이력 {
 - 상점 서비스에서는 결제승인 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
 
 ```
-package fooddelivery;
+package movie;
 
 ...
 
@@ -274,11 +274,17 @@ package fooddelivery;
 public class PolicyHandler{
 
     @StreamListener(KafkaProcessor.INPUT)
-    public void whenever결제승인됨_주문정보받음(@Payload 결제승인됨 결제승인됨){
+    public void wheneverPaid_(@Payload Paid paid){
 
-        if(결제승인됨.isMe()){
-            System.out.println("##### listener 주문정보받음 : " + 결제승인됨.toJson());
-            // 주문 정보를 받았으니, 요리를 슬슬 시작해야지..
+        if(paid.isMe()){
+
+            System.out.println("======================================");
+            System.out.println("**** listener  : " + paid.toJson());
+            System.out.println("======================================");
+            bookRepository.findById(paid.getBookingId()).ifPresent((book)->{
+                book.setStatus("PaidComplete");
+                bookRepository.save(book);
+            });
 
         }
     }
