@@ -566,7 +566,7 @@ hystrix:
 $ siege -c50 -t60S -r10 --content-type "application/json" 'http://book:8080/books POST {"qty":"3"}'
 
 ** SIEGE 4.0.5
-** Preparing 100 concurrent users for battle.
+** Preparing 50 concurrent users for battle.
 The server is now under siege...
 
 HTTP/1.1 201     1.17 secs:     282 bytes ==> POST http://book:8080/books
@@ -655,9 +655,19 @@ Shortest transaction:           0.01
 - Retry 의 설정 (istio)
 - Availability 가 높아진 것을 확인 (siege)
 
-### Autoscale (HPA)
+## Autoscale (HPA)
 
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다.
+
+- 결제서비스에 대한 deplyment.yml 파일에 해당 내용을 추가한다.
+
+```
+  resources:
+    requests:
+      cpu: "300m"
+    limits:
+      cpu: "500m"
+```
 
 - 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
 
@@ -668,7 +678,7 @@ kubectl autoscale deploy payment --min=1 --max=10 --cpu-percent=15
 - CB 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
 
 ```
-siege -c100 -t120S -r10 --content-type "application/json" 'http://book:8080/books POST {"qty": "2"}'
+siege -c50 -t120S -r10 --content-type "application/json" 'http://book:8080/books POST {"qty": "3"}'
 ```
 
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
@@ -680,23 +690,36 @@ kubectl get deploy payment -w
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
 
 ```
-NAME    DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-pay     1         1         1            1           17s
-pay     1         2         1            1           45s
-pay     1         4         1            1           1m
-:
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+payment   1/1     1            1           81s
+payment   1/4     1            1           3m51s
+payment   1/8     4            1           4m6s
+payment   1/8     8            1           4m6s
+payment   1/9     8            1           4m21s
+payment   2/9     9            2           5m13s
+payment   3/9     9            3           5m18s
+payment   4/9     9            4           5m20s
+payment   5/9     9            5           5m28s
+payment   6/9     9            6           5m29s
+payment   7/9     9            7           5m29s
+payment   8/9     9            8           5m31s
+payment   9/9     9            9           5m42s
 ```
 
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
 
 ```
-Transactions:		        5078 hits
-Availability:		       92.45 %
-Elapsed time:		       120 secs
-Data transferred:	        0.34 MB
-Response time:		        5.60 secs
-Transaction rate:	       17.15 trans/sec
-Throughput:		        0.01 MB/sec
-Concurrency:		       96.02
+Transactions:                    976 hits
+Availability:                  89.95 %
+Elapsed time:                 119.45 secs
+Data transferred:               0.29 MB
+Response time:                  0.61 secs
+Transaction rate:               8.17 trans/sec
+Throughput:                     0.00 MB/sec
+Concurrency:                    4.95
+Successful transactions:         976
+Failed transactions:             109
+Longest transaction:            0.79
+Shortest transaction:           0.41
 ```
 
