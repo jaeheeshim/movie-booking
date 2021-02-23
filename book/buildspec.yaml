@@ -83,10 +83,10 @@ phases:
                       - containerPort: 8080
                     env:
                       - name: NAME
-                      valueFrom:
-                        configMapKeyRef:
-                          name: moviecm
-                          key: text1
+                        valueFrom:
+                          configMapKeyRef:
+                            name: moviecm
+                            key: text1
                     readinessProbe:
                       httpGet:
                         path: /actuator/health
