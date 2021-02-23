@@ -566,7 +566,7 @@ hystrix:
 $ siege -c50 -t60S -r10 --content-type "application/json" 'http://book:8080/books POST {"qty":"3"}'
 
 ** SIEGE 4.0.5
-** Preparing 100 concurrent users for battle.
+** Preparing 50 concurrent users for battle.
 The server is now under siege...
 
 HTTP/1.1 201     1.17 secs:     282 bytes ==> POST http://book:8080/books
