@@ -4,7 +4,7 @@ env:
   variables:
     _PROJECT_NAME: "gateway"
     _PROJECT_DIR: "gateway"
-    CODEBUILD_RESOLVED_SOURCE_VERSION: "v1"
+    CODEBUILD_RESOLVED_SOURCE_VERSION: "latest"
 
 phases:
   install:
@@ -47,9 +47,11 @@ phases:
         kind: Service
         metadata:
           name: $_PROJECT_NAME
+          namespace: movie
           labels:
             app: $_PROJECT_NAME
         spec:
+          type: LoadBalancer
           ports:
             - port: 8080
               targetPort: 8080
@@ -62,6 +64,7 @@ phases:
         kind: Deployment
         metadata:
           name: $_PROJECT_NAME
+          namespace: movie
           labels:
             app: $_PROJECT_NAME
         spec:
