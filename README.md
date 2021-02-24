@@ -59,7 +59,7 @@ MSA/DDD/Event Storming/EDA 를 포괄하는 분석/설계/구현/운영 전단�
 
 # 구현:
 
-분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 BC별로 대변되는 마이크로 서비스들을 스프링부트로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 808n 이다)
+분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 BC별로 대변되는 마이크로 서비스들을 스프링부트로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 8084 이다)
 
 ```
 cd book
@@ -73,6 +73,9 @@ mvn spring-boot:run
 
 cd mypage
 mvn srping-boot:run
+
+cd gateway
+mvn spring-boot:run
 ```
 
 ## 동기식 호출
@@ -109,7 +112,7 @@ public interface PaymentService {
 
         Booked booked = new Booked();
         BeanUtils.copyProperties(this, booked);
-        booked.publishAfterCommit();
+        
         movie.external.Payment payment = new movie.external.Payment();
 
         System.out.println("*********************");
@@ -122,15 +125,17 @@ public interface PaymentService {
         payment.setTotalPrice(booked.getTotalPrice());
         BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
             .pay(payment);
+	    
+	booked.publishAfterCommit();
     }
 ```
 
-- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인
+- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 예매도 못받는다는 것을 확인
 
 
 - 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
 
-1. 주문처리
+1. 예매처리
 
 <img width="688" alt="스크린샷 2021-02-23 오전 11 16 37" src="https://user-images.githubusercontent.com/28583602/108794189-ab226880-75c8-11eb-8692-cb06effe8bb2.png">
 
@@ -141,7 +146,7 @@ cd ../payment
 mvn spring-boot:run
 ```
 
-3. 주문처리
+3. 예매처리
 
 <img width="692" alt="스크린샷 2021-02-23 오전 11 18 23" src="https://user-images.githubusercontent.com/28583602/108794296-da38da00-75c8-11eb-8d86-fce182516fa7.png">
 
@@ -157,13 +162,16 @@ package movie;
 
 @Entity
 @Table(name="Book_table")
-public class Payment {
+public class Book {
 
  ...
-    @PrePersist
-    public void onPrePersist(){
+    @PostPersist
+    public void onPostPersist(){
         Booked booked = new Booked();
         BeanUtils.copyProperties(this, booked);
+	
+	'''
+	
         booked.publishAfterCommit();
     }
 
@@ -202,16 +210,16 @@ public class PolicyHandler{
 }
 
 ```
-- Ticket 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, Ticket 시스템이 유지보수로 인해 잠시 내려간 상태라도 예매 받는데 문제가 없다:
+- Ticket 시스템은 예매/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, Ticket 시스템이 유지보수로 인해 잠시 내려간 상태라도 예매 받는데 문제가 없다:
 
-- 상점 서비스 (store) 를 잠시 내려놓음 (ctrl+c)
+- Ticket 서비스를 잠시 내려놓음 (ctrl+c)
 
-1. 주문처리
+1. 예매처리
 <img width="1056" alt="스크린샷 2021-02-23 오후 1 12 47" src="https://user-images.githubusercontent.com/28583602/108801338-d3b25e80-75d8-11eb-9a01-094c0c926c03.png">
 <img width="1441" alt="스크린샷 2021-02-23 오후 1 13 01" src="https://user-images.githubusercontent.com/28583602/108801356-dca33000-75d8-11eb-8a05-fd69895406f4.png">
 
 
-2. 주문상태 확인
+2. 예매상태 확인
 <img width="859" alt="스크린샷 2021-02-23 오후 1 15 10" src="https://user-images.githubusercontent.com/28583602/108801469-2a1f9d00-75d9-11eb-8a08-b0a3a64df1ab.png">
 
 3. Ticket 서비스 기동
@@ -220,7 +228,7 @@ cd ../ticket
 mvn spring-boot:run
 ```
 
-4. 주문상태 확인
+4. 예매상태 확인
 <img width="882" alt="스크린샷 2021-02-23 오후 1 19 34" src="https://user-images.githubusercontent.com/28583602/108801714-c8136780-75d9-11eb-8a24-1022857d70e4.png">
 
 
@@ -275,7 +283,7 @@ http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalP
 # ticket 서비스의 출력처리
 http PATCH http://localhost:8088/tickets/1 status="Printed"
 
-# 주문 상태 확인
+# 예매 상태 확인
 http http://localhost:8088/books/1
 
 ```
@@ -294,8 +302,8 @@ http POST http://localhost:8088/books qty=2 movieName="soul" seat="1A,2B" totalP
 # ticket 서비스의 출력처리
 http PATCH http://localhost:8088/tickets/1 status="Printed"
 
-# 주문 상태 확인
-http http://localhost:8088/books/1
+# Mypage에서 상태 확인
+http http://localhost:8088/mypages/1
 
 ```
 
@@ -652,12 +660,21 @@ Shortest transaction:           0.01
 
 - 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 62% 가 성공하였고, 38%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
 
-- Retry 의 설정 (istio)
 - Availability 가 높아진 것을 확인 (siege)
 
-### Autoscale (HPA)
+## Autoscale (HPA)
 
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다.
+
+- 결제서비스에 대한 deplyment.yml 파일에 해당 내용을 추가한다.
+
+```
+  resources:
+    requests:
+      cpu: "300m"
+    limits:
+      cpu: "500m"
+```
 
 - 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
 
@@ -668,7 +685,7 @@ kubectl autoscale deploy payment --min=1 --max=10 --cpu-percent=15
 - CB 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
 
 ```
-siege -c100 -t120S -r10 --content-type "application/json" 'http://book:8080/books POST {"qty": "2"}'
+siege -c50 -t120S -r10 --content-type "application/json" 'http://book:8080/books POST {"qty": "3"}'
 ```
 
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
@@ -680,23 +697,36 @@ kubectl get deploy payment -w
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
 
 ```
-NAME    DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-pay     1         1         1            1           17s
-pay     1         2         1            1           45s
-pay     1         4         1            1           1m
-:
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+payment   1/1     1            1           81s
+payment   1/4     1            1           3m51s
+payment   1/8     4            1           4m6s
+payment   1/8     8            1           4m6s
+payment   1/9     8            1           4m21s
+payment   2/9     9            2           5m13s
+payment   3/9     9            3           5m18s
+payment   4/9     9            4           5m20s
+payment   5/9     9            5           5m28s
+payment   6/9     9            6           5m29s
+payment   7/9     9            7           5m29s
+payment   8/9     9            8           5m31s
+payment   9/9     9            9           5m42s
 ```
 
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
 
 ```
-Transactions:		        5078 hits
-Availability:		       92.45 %
-Elapsed time:		       120 secs
-Data transferred:	        0.34 MB
-Response time:		        5.60 secs
-Transaction rate:	       17.15 trans/sec
-Throughput:		        0.01 MB/sec
-Concurrency:		       96.02
+Transactions:                    976 hits
+Availability:                  89.95 %
+Elapsed time:                 119.45 secs
+Data transferred:               0.29 MB
+Response time:                  0.61 secs
+Transaction rate:               8.17 trans/sec
+Throughput:                     0.00 MB/sec
+Concurrency:                    4.95
+Successful transactions:         976
+Failed transactions:             109
+Longest transaction:            0.79
+Shortest transaction:           0.41
 ```
 
