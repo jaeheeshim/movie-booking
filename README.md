@@ -75,7 +75,7 @@ cd mypage
 mvn srping-boot:run
 
 cd gateway
-mvn sprint-boot:run
+mvn spring-boot:run
 ```
 
 ## 동기식 호출
