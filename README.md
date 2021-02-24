@@ -162,13 +162,16 @@ package movie;
 
 @Entity
 @Table(name="Book_table")
-public class Payment {
+public class Book {
 
  ...
-    @PrePersist
-    public void onPrePersist(){
+    @PostPersist
+    public void onPostPersist(){
         Booked booked = new Booked();
         BeanUtils.copyProperties(this, booked);
+	
+	'''
+	
         booked.publishAfterCommit();
     }
 
