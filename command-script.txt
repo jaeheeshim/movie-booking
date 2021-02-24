@@ -9,3 +9,7 @@
 > kubectl create ns kafka
 > helm install --name kafka incubator/kafka --namespace kafka
 
+## Kafka 토픽 확인
+> kubectl -n kafka exec my-kafka-0 -- /usr/bin/kafka-topics --zookeeper my-kafka-zookeeper:2181 --list
+> kubectl -n kafka exec -ti my-kafka-0 -- /usr/bin/kafka-console-consumer --bootstrap-server my-kafka:9092 --topic movie --from-beginning
+
