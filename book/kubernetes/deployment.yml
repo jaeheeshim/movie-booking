@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: book
-          image: 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skteam03-book:v11
+          image: -
           ports:
             - containerPort: 8080
           env:
