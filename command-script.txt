@@ -1,0 +1,11 @@
+## Kafka 설치
+> kubectl --namespace kube-system create sa tiller      # helm 의 설치관리자를 위한 시스템 사용자 생성
+> kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+
+> curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
+
+> helm repo add incubator https://charts.helm.sh/incubator
+> helm repo update
+> kubectl create ns kafka
+> helm install my-kafka --namespace kafka incubator/kafka
+
