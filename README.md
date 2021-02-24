@@ -112,7 +112,7 @@ public interface PaymentService {
 
         Booked booked = new Booked();
         BeanUtils.copyProperties(this, booked);
-        booked.publishAfterCommit();
+        
         movie.external.Payment payment = new movie.external.Payment();
 
         System.out.println("*********************");
@@ -125,6 +125,8 @@ public interface PaymentService {
         payment.setTotalPrice(booked.getTotalPrice());
         BookApplication.applicationContext.getBean(movie.external.PaymentService.class)
             .pay(payment);
+	    
+	booked.publishAfterCommit();
     }
 ```
 
