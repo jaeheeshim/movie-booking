@@ -204,7 +204,7 @@ public class PolicyHandler{
 ```
 - Ticket 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, Ticket 시스템이 유지보수로 인해 잠시 내려간 상태라도 예매 받는데 문제가 없다:
 
-- 상점 서비스 (store) 를 잠시 내려놓음 (ctrl+c)
+- Ticket 서비스를 잠시 내려놓음 (ctrl+c)
 
 1. 주문처리
 <img width="1056" alt="스크린샷 2021-02-23 오후 1 12 47" src="https://user-images.githubusercontent.com/28583602/108801338-d3b25e80-75d8-11eb-9a01-094c0c926c03.png">
