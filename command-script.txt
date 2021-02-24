@@ -11,5 +11,5 @@
 
 ## Kafka 토픽 확인
 > kubectl -n kafka exec kafka-0 -- /usr/bin/kafka-topics --zookeeper kafka-zookeeper:2181 --list
-> kubectl -n kafka exec -ti my-kafka-0 -- /usr/bin/kafka-console-consumer --bootstrap-server my-kafka:9092 --topic movie --from-beginning
+> kubectl -n kafka exec -ti kafka-0 -- /usr/bin/kafka-console-consumer --bootstrap-server kafka:9092 --topic movie --from-beginning
 
