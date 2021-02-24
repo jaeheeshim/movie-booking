@@ -7,5 +7,5 @@
 > helm repo add incubator https://charts.helm.sh/incubator
 > helm repo update
 > kubectl create ns kafka
-> helm install my-kafka --namespace kafka incubator/kafka
+> helm install --name kafka incubator/kafka --namespace kafka
 
